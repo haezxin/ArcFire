@@ -67,112 +67,112 @@ const SOURCES = {
 
     // ── War 1 assets (Ruins)
     bg_war1_bright: "War1/Bright/War.png",
-    bg_war1_pale:   "War1/Pale/War.png",
+    bg_war1_pale: "War1/Pale/War.png",
     sky_war1_bright: "War1/Bright/sky.png",
-    sky_war1_pale:   "War1/Pale/sky.png",
+    sky_war1_pale: "War1/Pale/sky.png",
     sun_war1_bright: "War1/Bright/sun.png",
-    sun_war1_pale:   "War1/Pale/sun.png",
+    sun_war1_pale: "War1/Pale/sun.png",
     dec_war1_fence_bright: "War1/Bright/fence.png",
-    dec_war1_fence_pale:   "War1/Pale/fence.png",
+    dec_war1_fence_pale: "War1/Pale/fence.png",
     dec_war1_ruins_bright: "War1/Bright/ruins.png",
-    dec_war1_ruins_pale:   "War1/Pale/ruins.png",
+    dec_war1_ruins_pale: "War1/Pale/ruins.png",
     dec_war1_h1_bright: "War1/Bright/houses1.png",
-    dec_war1_h1_pale:   "War1/Pale/houses1.png",
+    dec_war1_h1_pale: "War1/Pale/houses1.png",
     dec_war1_h2_bright: "War1/Bright/houses2.png",
-    dec_war1_h2_pale:   "War1/Pale/houses2.png",
+    dec_war1_h2_pale: "War1/Pale/houses2.png",
     dec_war1_h3_bright: "War1/Bright/house3.png",
-    dec_war1_h3_pale:   "War1/Pale/house3.png",
+    dec_war1_h3_pale: "War1/Pale/house3.png",
     plat_war1_bright: "War1/Bright/road.png",
-    plat_war1_pale:   "War1/Pale/road.png",
+    plat_war1_pale: "War1/Pale/road.png",
     crater1_war1_bright: "War1/Bright/crater1.png",
     crater2_war1_bright: "War1/Bright/crater2.png",
     crater3_war1_bright: "War1/Bright/crater3.png",
-    crater1_war1_pale:   "War1/Pale/crater1.png",
-    crater2_war1_pale:   "War1/Pale/crater2.png",
-    crater3_war1_pale:   "War1/Pale/crater3.png",
+    crater1_war1_pale: "War1/Pale/crater1.png",
+    crater2_war1_pale: "War1/Pale/crater2.png",
+    crater3_war1_pale: "War1/Pale/crater3.png",
 
     // ── War 2 assets (Desert)
     bg_war2_bright: "War2/Bright/War2.png",
-    bg_war2_pale:   "War2/Pale/War2.png",
+    bg_war2_pale: "War2/Pale/War2.png",
     sky_war2_bright: "War2/Bright/sky.png",
-    sky_war2_pale:   "War2/Pale/sky.png",
-    dec_war2_wall_bright:   "War2/Bright/wall.png",
-    dec_war2_wall_pale:     "War2/Pale/wall.png",
+    sky_war2_pale: "War2/Pale/sky.png",
+    dec_war2_wall_bright: "War2/Bright/wall.png",
+    dec_war2_wall_pale: "War2/Pale/wall.png",
     dec_war2_h1_bright: "War2/Bright/houses1.png",
-    dec_war2_h1_pale:   "War2/Pale/houses1.png",
+    dec_war2_h1_pale: "War2/Pale/houses1.png",
     dec_war2_h2_bright: "War2/Bright/houses2.png",
-    dec_war2_h2_pale:   "War2/Pale/houses2.png",
+    dec_war2_h2_pale: "War2/Pale/houses2.png",
     dec_war2_h3_bright: "War2/Bright/houses3.png",
-    dec_war2_h3_pale:   "War2/Pale/houses3.png",
+    dec_war2_h3_pale: "War2/Pale/houses3.png",
     dec_war2_h4_bright: "War2/Bright/houses4.png",
-    dec_war2_h4_pale:   "War2/Pale/houses4.png",
+    dec_war2_h4_pale: "War2/Pale/houses4.png",
     dec_war2_crack1_bright: "War2/Bright/cracks1.png",
-    dec_war2_crack1_pale:   "War2/Pale/cracks1.png",
+    dec_war2_crack1_pale: "War2/Pale/cracks1.png",
     dec_war2_crack2_bright: "War2/Bright/cracks2.png",
-    dec_war2_crack2_pale:   "War2/Pale/cracks2.png",
+    dec_war2_crack2_pale: "War2/Pale/cracks2.png",
     plat_war2_bright: "War2/Bright/road.png",
-    plat_war2_pale:   "War2/Pale/road.png",
+    plat_war2_pale: "War2/Pale/road.png",
     // War2 has no craters, fall back to war1
     crater1_war2_bright: "War1/Bright/crater1.png",
     crater2_war2_bright: "War1/Bright/crater2.png",
     crater3_war2_bright: "War1/Bright/crater3.png",
-    crater1_war2_pale:   "War1/Pale/crater1.png",
-    crater2_war2_pale:   "War1/Pale/crater2.png",
-    crater3_war2_pale:   "War1/Pale/crater3.png",
+    crater1_war2_pale: "War1/Pale/crater1.png",
+    crater2_war2_pale: "War1/Pale/crater2.png",
+    crater3_war2_pale: "War1/Pale/crater3.png",
 
     // ── War 3 assets (Urban Green)
     bg_war3_bright: "War3/Bright/War3.png",
-    bg_war3_pale:   "War3/Pale/War3.png",
+    bg_war3_pale: "War3/Pale/War3.png",
     sky_war3_bright: "War3/Bright/sky.png",
-    sky_war3_pale:   "War3/Pale/sky.png",
+    sky_war3_pale: "War3/Pale/sky.png",
     dec_war3_fence_bright: "War3/Bright/fence.png",
-    dec_war3_fence_pale:   "War3/Pale/fence.png",
+    dec_war3_fence_pale: "War3/Pale/fence.png",
     dec_war3_trees_bright: "War3/Bright/trees.png",
-    dec_war3_trees_pale:   "War3/Pale/trees.png",
+    dec_war3_trees_pale: "War3/Pale/trees.png",
     dec_war3_h2_bright: "War3/Bright/houses2.png",
-    dec_war3_h2_pale:   "War3/Pale/houses2.png",
+    dec_war3_h2_pale: "War3/Pale/houses2.png",
     dec_war3_b1_bright: "War3/Bright/bricks1.png",
-    dec_war3_b1_pale:   "War3/Pale/bricks1.png",
+    dec_war3_b1_pale: "War3/Pale/bricks1.png",
     dec_war3_b2_bright: "War3/Bright/bricks2.png",
-    dec_war3_b2_pale:   "War3/Pale/bricks2.png",
+    dec_war3_b2_pale: "War3/Pale/bricks2.png",
     plat_war3_bright: "War3/Bright/road.png",
-    plat_war3_pale:   "War3/Pale/road.png",
+    plat_war3_pale: "War3/Pale/road.png",
     // War3 has no craters, fall back to war1
     crater1_war3_bright: "War1/Bright/crater1.png",
     crater2_war3_bright: "War1/Bright/crater2.png",
     crater3_war3_bright: "War1/Bright/crater3.png",
-    crater1_war3_pale:   "War1/Pale/crater1.png",
-    crater2_war3_pale:   "War1/Pale/crater2.png",
-    crater3_war3_pale:   "War1/Pale/crater3.png",
+    crater1_war3_pale: "War1/Pale/crater1.png",
+    crater2_war3_pale: "War1/Pale/crater2.png",
+    crater3_war3_pale: "War1/Pale/crater3.png",
 
     // ── War 4 assets (Night City)
     bg_war4_bright: "War4/Bright/War4.png",
-    bg_war4_pale:   "War4/Pale/War4.png",
+    bg_war4_pale: "War4/Pale/War4.png",
     sky_war4_bright: "War4/Bright/sky.png",
-    sky_war4_pale:   "War4/Pale/sky.png",
+    sky_war4_pale: "War4/Pale/sky.png",
     dec_war4_moon_bright: "War4/Bright/moon.png",
-    dec_war4_moon_pale:   "War4/Pale/moon.png",
+    dec_war4_moon_pale: "War4/Pale/moon.png",
     dec_war4_wall_bright: "War4/Bright/wall.png",
-    dec_war4_wall_pale:   "War4/Pale/wall.png",
+    dec_war4_wall_pale: "War4/Pale/wall.png",
     dec_war4_h1_bright: "War4/Bright/houses1.png",
-    dec_war4_h1_pale:   "War4/Pale/houses1.png",
+    dec_war4_h1_pale: "War4/Pale/houses1.png",
     dec_war4_h2_bright: "War4/Bright/houses2.png",
-    dec_war4_h2_pale:   "War4/Pale/houses2.png",
+    dec_war4_h2_pale: "War4/Pale/houses2.png",
     dec_war4_wheels1_bright: "War4/Bright/wheels.png",
-    dec_war4_wheels1_pale:   "War4/Pale/wheels.png",
+    dec_war4_wheels1_pale: "War4/Pale/wheels.png",
     dec_war4_wheels2_bright: "War4/Bright/wheels2.png",
-    dec_war4_wheels2_pale:   "War4/Pale/wheels2.png",
+    dec_war4_wheels2_pale: "War4/Pale/wheels2.png",
     dec_war4_wheels3_bright: "War4/Bright/wheels3.png",
-    dec_war4_wheels3_pale:   "War4/Pale/wheels3.png",
+    dec_war4_wheels3_pale: "War4/Pale/wheels3.png",
     plat_war4_bright: "War4/Bright/road.png",
-    plat_war4_pale:   "War4/Pale/road.png",
+    plat_war4_pale: "War4/Pale/road.png",
     // War4 has no craters, fall back to war1
     crater1_war4_bright: "War1/Bright/crater1.png",
     crater2_war4_bright: "War1/Bright/crater2.png",
     crater3_war4_bright: "War1/Bright/crater3.png",
-    crater1_war4_pale:   "War1/Pale/crater1.png",
-    crater2_war4_pale:   "War1/Pale/crater2.png",
-    crater3_war4_pale:   "War1/Pale/crater3.png",
+    crater1_war4_pale: "War1/Pale/crater1.png",
+    crater2_war4_pale: "War1/Pale/crater2.png",
+    crater3_war4_pale: "War1/Pale/crater3.png",
 
     // ── Powerups & misc
     size_power_up: "powerups/targetSize.png",
@@ -218,7 +218,7 @@ function getCroppedImage(imgKey) {
     const ctx = c.getContext("2d");
     ctx.drawImage(img, 0, 0);
     const data = ctx.getImageData(0, 0, w, h).data;
-    
+
     let minX = w, minY = h, maxX = 0, maxY = 0;
     for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
@@ -230,7 +230,7 @@ function getCroppedImage(imgKey) {
             }
         }
     }
-    
+
     if (minX > maxX || minY > maxY) return img; // Failsafe
     const cropW = maxX - minX + 1;
     const cropH = maxY - minY + 1;
@@ -240,7 +240,7 @@ function getCroppedImage(imgKey) {
     cropped.width = cropW;
     cropped.height = cropH;
     cropped.getContext("2d").drawImage(img, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
-    
+
     // Store in cache for blazing fast instant retrievals next round!
     IMAGES[cacheKey] = cropped;
     return cropped;
@@ -304,28 +304,28 @@ function clamp(value, min, max) {
 
 // Decoration layers per war zone / theme
 const WAR_DECOR = {
-    1: ["dec_war1_h1","dec_war1_h2","dec_war1_h3"],
-    2: ["dec_war2_h1","dec_war2_h2","dec_war2_h3","dec_war2_h4"],
-    3: ["dec_war3_h2","dec_war3_trees"],
-    4: ["dec_war4_h1","dec_war4_h2"],
+    1: ["dec_war1_h1", "dec_war1_h2", "dec_war1_h3"],
+    2: ["dec_war2_h1", "dec_war2_h2", "dec_war2_h3", "dec_war2_h4"],
+    3: ["dec_war3_h2", "dec_war3_trees"],
+    4: ["dec_war4_h1", "dec_war4_h2"],
 };
 
 function createTerrain() {
     GAME.terrain.length = 0;
-    const lv     = Math.min(GAME.level, 4); // cap at 4 (procedural levels reuse war1-4)
-    const theme  = GAME.theme;
+    const lv = Math.min(GAME.level, 4); // cap at 4 (procedural levels reuse war1-4)
+    const theme = GAME.theme;
     const platKey = `plat_war${lv}_${theme}`;
     const img = IMAGES[platKey];
 
     // Background Canvas (Sky, Sun, Buildings, Decor)
     GAME.bgCanvas = document.createElement("canvas");
-    GAME.bgCanvas.width  = GAME.width;
+    GAME.bgCanvas.width = GAME.width;
     GAME.bgCanvas.height = GAME.height;
     const bgCtx = GAME.bgCanvas.getContext("2d");
 
     // Foreground Terrain Canvas (Road/Trenches)
     GAME.terrainCanvas = document.createElement("canvas");
-    GAME.terrainCanvas.width  = GAME.width;
+    GAME.terrainCanvas.width = GAME.width;
     GAME.terrainCanvas.height = GAME.height;
     const tctx = GAME.terrainCanvas.getContext("2d");
 
@@ -342,12 +342,12 @@ function createTerrain() {
 
     // ── Procedural fallback (used when road image is missing or for levels 5-9)
     const fallback = () => {
-        const seed      = Math.random() * 1000;
-        const diffBump  = Math.min((GAME.difficulty - 1) * 25, 150);
-        const hillH     = 60 + Math.random() * 80 + diffBump;
+        const seed = Math.random() * 1000;
+        const diffBump = Math.min((GAME.difficulty - 1) * 25, 150);
+        const hillH = 60 + Math.random() * 80 + diffBump;
         for (let x = 0; x <= GAME.width; x += 4) {
             let y = 450 + Math.sin(x / 150 + seed) * hillH + Math.sin(x / 50 + seed) * 15;
-            if (x < 200)              y = y * (x / 200) + 400 * (1 - x / 200);
+            if (x < 200) y = y * (x / 200) + 400 * (1 - x / 200);
             if (x > GAME.width - 200) y = y * ((GAME.width - x) / 200) + 400 * (1 - (GAME.width - x) / 200);
             GAME.terrain.push({ x, y });
         }
@@ -371,7 +371,7 @@ function createTerrain() {
         tctx.closePath();
         tctx.fill();
         tctx.lineWidth = 12;
-        tctx.strokeStyle = `rgba(${r+30},${g+40},${b+30},0.8)`;
+        tctx.strokeStyle = `rgba(${r + 30},${g + 40},${b + 30},0.8)`;
         tctx.beginPath();
         tctx.moveTo(GAME.terrain[0].x, GAME.terrain[0].y);
         for (const p of GAME.terrain) tctx.lineTo(p.x, p.y);
@@ -416,7 +416,7 @@ function createTerrain() {
                 tctx.closePath();
                 tctx.fill();
                 tctx.globalCompositeOperation = "source-over"; // restore
-                
+
                 // Sample the terrain height strictly from the carved road image alpha
                 const imgData = tctx.getImageData(0, 0, GAME.width, GAME.height).data;
                 for (let x = 0; x <= GAME.width; x += 4) {
@@ -428,12 +428,12 @@ function createTerrain() {
                 }
             } else {
                 // Procedurally generated massive hills (as foreground terrain only)
-                const seed      = Math.random() * 1000;
-                const diffBump  = Math.min((GAME.difficulty - 1) * 25, 150);
-                const hillH     = 60 + Math.random() * 80 + diffBump;
+                const seed = Math.random() * 1000;
+                const diffBump = Math.min((GAME.difficulty - 1) * 25, 150);
+                const hillH = 60 + Math.random() * 80 + diffBump;
                 for (let x = 0; x <= GAME.width; x += 4) {
                     let y = 450 + Math.sin(x / 150 + seed) * hillH + Math.sin(x / 50 + seed) * 15;
-                    if (x < 150)              y = y * (x / 150) + 400 * (1 - x / 150);
+                    if (x < 150) y = y * (x / 150) + 400 * (1 - x / 150);
                     if (x > GAME.width - 150) y = y * ((GAME.width - x) / 150) + 400 * (1 - (GAME.width - x) / 150);
                     GAME.terrain.push({ x, y });
                 }
@@ -454,7 +454,7 @@ function createTerrain() {
                 tctx.closePath();
                 tctx.fill();
                 tctx.lineWidth = 12;
-                tctx.strokeStyle = `rgba(${r+30},${g+40},${b+30},0.8)`;
+                tctx.strokeStyle = `rgba(${r + 30},${g + 40},${b + 30},0.8)`;
                 tctx.beginPath();
                 tctx.moveTo(GAME.terrain[0].x, GAME.terrain[0].y);
                 for (const p of GAME.terrain) tctx.lineTo(p.x, p.y);
@@ -608,12 +608,12 @@ function resetGame() {
             const baseKey = obsList[Math.floor(Math.random() * obsList.length)];
             const attemptKey = `${baseKey}_${GAME.theme}`;
             const croppedImg = getCroppedImage(attemptKey);
-            
+
             if (croppedImg && croppedImg.width > 0) {
                 imgKey = attemptKey + "_cropped";
                 if (!IMAGES[imgKey]) imgKey = attemptKey; // Fallback if no crop needed
                 obsType = "image";
-                
+
                 // Keep hitboxes realistic depending on sprite complexity
                 const maxDim = 80 + Math.random() * 50;
                 const scale = maxDim / Math.max(croppedImg.width || croppedImg.naturalWidth, croppedImg.height || croppedImg.naturalHeight);
@@ -693,6 +693,11 @@ function spawnProjectile(tank, isHoming = false) {
     tank.state = "firing";
     tank.animFrame = 0;
     tank.animTimer = 0;
+
+    // ── SFX ──
+    if (typeof SFX !== "undefined") {
+        SFX.play(isHoming ? "missile" : "cannon");
+    }
 }
 
 function fireCurrentTank() {
@@ -717,11 +722,11 @@ function applyAIShot() {
 
     const dx = player.x - enemy.x;
     const dy = (player.y - 24) - (enemy.y - 24);
-    
+
     // Calculate expected wind drift (d = 0.5 * a * t^2) using a heuristic time-of-flight
-    const estTicks = Math.abs(dx) * 0.14; 
+    const estTicks = Math.abs(dx) * 0.14;
     const windDrift = 0.5 * GAME.wind * (estTicks * estTicks);
-    
+
     // Hard AI perfectly predicts wind drag. Normal does okay. Easy ignores it.
     const comp = GAME.difficultyMode === "hard" ? 1.0 : (GAME.difficultyMode === "normal" ? 0.5 : 0.0);
     const aimDx = dx - (windDrift * comp);
@@ -767,7 +772,7 @@ function canClimb(tank, dir, dt) {
     const currentY = getTerrainY(tank.x);
     const nextY = getTerrainY(tank.x + dir * step);
     const rise = currentY - nextY; // Positive means climbing upwards
-    
+
     // Check if the vertical climb over 6 pixels is greater than ~9 pixels (1.5 slope ratio).
     // This perfectly catches steep crater walls while allowing gentle dips.
     if (rise > step * 1.5) {
@@ -926,6 +931,8 @@ function applyDamage(tank, amount) {
             tank.state = "exploding";
             tank.animFrame = 0;
             tank.animTimer = 0;
+            // ── SFX ──
+            if (typeof SFX !== "undefined") SFX.play("tankDestroyed");
         }
         tank.alive = false;
         tank.hp = 0;
@@ -967,6 +974,11 @@ function applyDamage(tank, amount) {
 function explode(x, y, radius, directTank) {
     carveTerrain(x, y, Math.max(radius, 42));
     GAME.screenShake = Math.max(GAME.screenShake, 8);
+
+    // ── SFX ──
+    if (typeof SFX !== "undefined") {
+        SFX.play("shellHit", Math.min(1, 0.6 + radius / 80));
+    }
 
     GAME.effects.push({
         type: "explosion",
@@ -1402,7 +1414,7 @@ function drawObstacles() {
         ctx.fillRect(-obs.width / 2, -obs.height - 14, obs.width, 5);
         ctx.fillStyle = "#7aff7a";
         ctx.fillRect(-obs.width / 2, -obs.height - 14, Math.max(0, obs.width * (obs.hp / obs.maxHp)), 5);
-        
+
         // Damage smoke state
         if (obs.hp < obs.maxHp) {
             ctx.fillStyle = "rgba(0,0,0,0.5)";
@@ -1544,6 +1556,8 @@ function updatePowerUps(dt) {
 
             if (dist < pickupDist && !pu.pickedUp) {
                 pu.pickedUp = true;
+                // ── SFX ──
+                if (typeof SFX !== "undefined") SFX.play("powerUp");
                 if (pu.type === "size") {
                     tank.scale = 0.6;
                     tank.effectTurns = 4;
@@ -1642,14 +1656,14 @@ function updateEnemyAI(dt) {
         if (Math.abs(dx) > moveSpeed * dt) {
             enemy.state = "moving";
             const dir = Math.sign(dx);
-            
+
             if (canClimb(enemy, dir, dt)) {
                 enemy.x = clamp(enemy.x + dir * moveSpeed * dt, minX, maxX);
             } else {
                 // If slope is too steep, give up pursuing position and brace to fire!
                 enemy.targetX = enemy.x;
             }
-            
+
             enemy.trackFrame += dt * 12;
             enemy.bob += dt * 10;
         } else {
@@ -1686,7 +1700,7 @@ function update(dt) {
     // Insta-kill tanks that fall to the bottom edge of the map!
     [player, enemy].forEach(tank => {
         if (tank.alive && tank.y >= GAME.height - 5) {
-            applyDamage(tank, 9999); 
+            applyDamage(tank, 9999);
         }
     });
 
