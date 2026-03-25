@@ -173,6 +173,46 @@ function drawTank(tank) {
         ctx.fill();
         ctx.restore();
     }
+
+    // Napalm burn indicator (flames around the tank)
+    if (GAME.burnZones && GAME.burnZones.length > 0) {
+        const isBurning = GAME.burnZones.some(z => z.turnsLeft > 0 && Math.abs(tank.x - z.x) <= z.radius);
+        if (isBurning) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.globalCompositeOperation = "lighter";
+
+            // Orange-red glow under the hull.
+            ctx.globalAlpha = 0.55;
+            const glow = ctx.createRadialGradient(0, 5, 4, 0, 5, 55 * tank.scale);
+            glow.addColorStop(0, "rgba(255, 200, 80, 0.55)");
+            glow.addColorStop(0.25, "rgba(255, 120, 30, 0.25)");
+            glow.addColorStop(1, "rgba(180, 20, 20, 0)");
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.ellipse(0, 8, 48 * tank.scale, 14 * tank.scale, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Flame tips.
+            ctx.globalAlpha = 0.85;
+            for (let i = 0; i < 9; i++) {
+                const t = i / 9;
+                const ang = -Math.PI / 2 + (t - 0.5) * 1.6;
+                const rx = Math.cos(ang) * (18 * tank.scale);
+                const ry = 6 + Math.sin(ang) * (10 * tank.scale);
+                const height = 16 * tank.scale + (Math.sin(GAME.titleTimer * 8 + i * 0.9) * 6 * tank.scale);
+                ctx.strokeStyle = "rgba(255, 90, 20, 0.55)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(rx, ry);
+                ctx.lineTo(rx, ry - height);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+    }
 }
 
 function drawAimGuide() {
@@ -881,37 +921,51 @@ function drawBurnZones() {
     for (const z of GAME.burnZones) {
         // z.turnsLeft is in turn ticks; use it to make the zone fade as it expires.
         const intensity = z.turnsLeft / 2; // 2 is the initial burn duration we set
-        const flicker = 0.85 + Math.sin(GAME.titleTimer * 10 + z.x * 0.01) * 0.15;
-        const alpha = Math.max(0, Math.min(1, intensity)) * 0.65 * flicker;
+        const flicker = 0.85 + Math.sin(GAME.titleTimer * 11 + z.x * 0.01) * 0.2;
+        const alpha = Math.max(0, Math.min(1, intensity)) * 0.78 * flicker;
 
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.translate(z.x, z.y);
+        ctx.globalCompositeOperation = "lighter";
 
         // Hot core glow
         const grad = ctx.createRadialGradient(0, 0, 4, 0, 0, z.radius);
-        grad.addColorStop(0, "rgba(255, 210, 90, 0.55)");
-        grad.addColorStop(0.25, "rgba(255, 130, 40, 0.38)");
-        grad.addColorStop(0.7, "rgba(200, 40, 20, 0.18)");
-        grad.addColorStop(1, "rgba(90, 10, 10, 0)");
+        grad.addColorStop(0, "rgba(255, 210, 90, 0.7)");
+        grad.addColorStop(0.25, "rgba(255, 120, 30, 0.45)");
+        grad.addColorStop(0.7, "rgba(210, 50, 20, 0.22)");
+        grad.addColorStop(1, "rgba(90, 10, 10, 0.0)");
         ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.ellipse(0, 5, z.radius, z.radius * 0.3, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 5, z.radius * 1.05, z.radius * 0.32, 0, 0, Math.PI * 2);
         ctx.fill();
 
         // Flame tips
-        for (let i = 0; i < 7; i++) {
-            const t = i / 7;
-            const ang = t * Math.PI * 2 + (GAME.titleTimer * 0.8);
-            const rx = Math.cos(ang) * z.radius * 0.55;
-            const ry = 5 + Math.sin(ang) * z.radius * 0.18;
-            const height = 10 + Math.random() * 14;
-            ctx.strokeStyle = "rgba(255, 90, 20, 0.35)";
-            ctx.lineWidth = 2;
+        for (let i = 0; i < 11; i++) {
+            const t = i / 11;
+            const ang = t * Math.PI * 2 + (GAME.titleTimer * 0.95);
+            const rx = Math.cos(ang) * z.radius * 0.58;
+            const ry = 5 + Math.sin(ang) * z.radius * 0.22;
+            const height = 14 + Math.random() * 18;
+            ctx.strokeStyle = "rgba(255, 90, 20, 0.5)";
+            ctx.lineWidth = 2.25;
             ctx.beginPath();
             ctx.moveTo(rx, ry);
             ctx.lineTo(rx, ry - height);
             ctx.stroke();
+        }
+
+        // Extra ember specks
+        for (let i = 0; i < 10; i++) {
+            const ang = Math.random() * Math.PI * 2;
+            const r = z.radius * Math.random() * 0.85;
+            const ex = Math.cos(ang) * r;
+            const ey = 3 + (Math.random() - 0.5) * 6;
+            const s = 1.5 + Math.random() * 2.2;
+            ctx.fillStyle = "rgba(255, 170, 60, 0.35)";
+            ctx.beginPath();
+            ctx.arc(ex, ey, s, 0, Math.PI * 2);
+            ctx.fill();
         }
 
         ctx.restore();
@@ -982,12 +1036,23 @@ function drawAmmoHotbar() {
         ctx.fillText(i + 1, x + 6, y + 6);
 
         // Ammo Label
-        ctx.fillStyle = isSelected ? "#ffffff" : "rgba(255, 255, 255, 0.65)";
+        const remaining = activeTank.ammoCounts ? activeTank.ammoCounts[i] : Infinity;
+        const isEmpty = remaining !== Infinity && remaining <= 0;
+
+        ctx.fillStyle = isEmpty ? "rgba(255,255,255,0.25)" : (isSelected ? "#ffffff" : "rgba(255, 255, 255, 0.65)");
         ctx.font = "bold 10px 'Rajdhani', sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "bottom";
         const ammoName = GAME.ammoTypes[i] || "AMMO";
         ctx.fillText(ammoName, x + boxSize / 2, y + boxSize - 8);
+
+        // Ammo remaining badge (Standard shows infinity)
+        ctx.font = "bold 12px 'Orbitron', sans-serif";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "top";
+        ctx.fillStyle = isEmpty ? "rgba(255, 100, 100, 0.8)" : "rgba(255, 255, 255, 0.75)";
+        const badge = remaining === Infinity ? "∞" : remaining.toString();
+        ctx.fillText(badge, x + boxSize - 6, y + 4);
 
         // Ammo Icon
         const iconKey = `ammo_${ammoName.toLowerCase()}`;

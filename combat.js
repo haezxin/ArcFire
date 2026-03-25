@@ -50,8 +50,16 @@ function fireCurrentTank() {
     if (GAME.projectiles.length > 0 || GAME.winner) return;
 
     const tank = GAME.turn === "player" ? player : enemy;
+    // Safety: never allow firing while parachuting.
+    if (tank.state === "parachuting") return;
+
     const ammoIndex = tank.selectedAmmoSlot;
     const ammoName = GAME.ammoTypes[ammoIndex];
+
+    // Ammo check (Standard is infinite).
+    const remaining = tank.ammoCounts ? tank.ammoCounts[ammoIndex] : Infinity;
+    if (remaining !== Infinity && remaining <= 0) return;
+    if (remaining !== Infinity) tank.ammoCounts[ammoIndex] = remaining - 1;
     
     spawnProjectile(tank, false, ammoName);
 }
@@ -323,6 +331,9 @@ function handleProjectileImpact(p, index, terrainY, collider) {
         const splashRadius = 68;
         // Oil does NOT carve craters and does NOT deal damage.
         // It only immobilizes tanks inside the puddle radius.
+
+        // Play a single oil impact sound for this shell.
+        if (typeof SFX !== "undefined") SFX.play("oilHit", 1.0);
         
         // Puddle effect
         GAME.effects.push({
@@ -371,6 +382,12 @@ function handleProjectileImpact(p, index, terrainY, collider) {
             turnsLeft: 2,
             skipNextTick: true // Don't apply burn damage immediately on impact/endTurn
         });
+
+        // Play a single napalm impact sound + start the looping burn.
+        if (typeof SFX !== "undefined") {
+            SFX.play("napalmHit", 1.0);
+            SFX.startLoop("napalmBurn", 1.0);
+        }
 
         if (hitTank) {
             // "Little damage" on direct hit; the burn does the rest.
@@ -658,12 +675,20 @@ function endTurn() {
                 }
             });
 
-            if (GAME.winner) return;
+            if (GAME.winner) {
+                if (typeof SFX !== "undefined") SFX.stopLoop("napalmBurn");
+                return;
+            }
 
             zone.turnsLeft--;
             if (zone.turnsLeft <= 0) {
                 GAME.burnZones.splice(i, 1);
             }
+        }
+
+        // If all napalm zones are gone, stop the looping burn sound.
+        if (GAME.burnZones.length === 0) {
+            if (typeof SFX !== "undefined") SFX.stopLoop("napalmBurn");
         }
     }
 

@@ -12,6 +12,9 @@ function resetGame() {
     GAME.craters = [];
     GAME.burnZones = [];
 
+    // Ensure any looping napalm audio is silenced on reset.
+    if (typeof SFX !== "undefined") SFX.stopLoop("napalmBurn");
+
     player.x = 130;
     enemy.x = 960;
     player.hp = 100;
@@ -40,6 +43,12 @@ function resetGame() {
     enemy.effectTurns = 0;
     player.hasHomingMissile = false;
     enemy.hasHomingMissile = false;
+
+    // Ammo inventory reset
+    player.ammoCounts = [Infinity, 3, 4, 4];
+    enemy.ammoCounts = [Infinity, 3, 4, 4];
+    player.selectedAmmoSlot = 0;
+    enemy.selectedAmmoSlot = 0;
     player.parachuteY = -100;
     enemy.parachuteY = -100;
     player.landed = false;
@@ -310,6 +319,8 @@ document.addEventListener("keydown", e => {
     if (e.code === "Space" || key === " ") {
         e.preventDefault();
         if (GAME.paused) return;
+        // Don't allow firing while the active tank is still parachuting.
+        if (activeTank.state === "parachuting") return;
         if (GAME.turn === "player" && GAME.state === "aiming" && GAME.projectiles.length === 0 && !GAME.winner) {
             fireCurrentTank();
         }
@@ -318,6 +329,8 @@ document.addEventListener("keydown", e => {
     if (e.key === "Space" || key === " ") {
         e.preventDefault();
         if (GAME.mode === 'multiplayer' && GAME.turn === 'enemy' && GAME.state === 'aiming' && GAME.projectiles.length === 0 && !GAME.winner) {
+            // Don't allow firing while the active tank is still parachuting.
+            if (activeTank.state === "parachuting") return;
             fireCurrentTank();
         }
     }
