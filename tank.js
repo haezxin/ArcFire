@@ -23,6 +23,11 @@ class Tank {
         this.parachuteY = 0; // For parachuting state
         this.selectedAmmoSlot = 0; // Current ammo selection
         this.stuckTurns = 0; // Turns remaining for Oil/Stuck effect
+
+        // Ammo inventory per slot:
+        // [Standard, Cluster, Oil, Napalm]
+        // Standard is infinite; others are limited.
+        this.ammoCounts = [Infinity, 3, 4, 4];
     }
 
     get y() {

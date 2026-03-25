@@ -9,14 +9,18 @@ const SFX = (() => {
         cannon:       "tankCannonFX.mp3",
         missile:      "missileFX.mp3",
         shellHit:     "shellHitFX.mp3",
+        oilHit:       "oilHitFX.mp3",
+        napalmHit:    "napalmHitFX.mp3",
         tankDestroyed:"tankDestroyedFX.mp3",
         tankLanding:  "tankLandingFX.mp3",
+        napalmBurn:   "napalmBurnFX.mp3",
         powerUp:      "powerUpsFX.mp3",
     };
 
     // Buffer pool per sound (max 4 concurrent instances each)
     const POOL_SIZE = 4;
     const pools = {};
+    const loops = Object.create(null);
 
     // Initialise pools on first interaction (deferred to satisfy autoplay policy)
     let ready = false;
@@ -61,6 +65,35 @@ const SFX = (() => {
         clip.play().catch(() => {}); // Swallow NotAllowedError safely
     }
 
+    function startLoop(name, volume = 1.0) {
+        if (!ready) init(); // ensure pools are initialised and SFX is ready
+        const file = FILES[name];
+        if (!file) { console.warn("SFX: unknown loop sound:", name); return; }
+
+        if (!loops[name]) {
+            const audio = new Audio(BASE + file);
+            audio.loop = true;
+            audio.preload = "auto";
+            loops[name] = audio;
+        }
+
+        const clip = loops[name];
+        clip.volume = Math.max(0, Math.min(1, volume));
+
+        // Avoid audible restarts if already playing.
+        if (clip.paused || clip.ended) {
+            clip.currentTime = 0;
+        }
+        clip.play().catch(() => {});
+    }
+
+    function stopLoop(name) {
+        const clip = loops[name];
+        if (!clip) return;
+        clip.pause();
+        clip.currentTime = 0;
+    }
+
     function warm(name) {
         if (!ready) init();
         const pool = pools[name];
@@ -80,5 +113,5 @@ const SFX = (() => {
         }
     }
 
-    return { play, init, warm };
+    return { play, startLoop, stopLoop, init, warm };
 })();
