@@ -368,12 +368,6 @@ function drawEffects() {
         }
 
         if (effect.type === "dirtSplash") {
-            if (!effect.soundPlayed) {
-                effect.soundPlayed = true;
-                if (typeof SFX !== "undefined") {
-                    SFX.play("tankLanding", 1.0);
-                }
-            }
             const splash = Math.max(0, 1 - effect.timer / effect.max);
             const radius = effect.radius * splash;
             ctx.save();

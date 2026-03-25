@@ -135,11 +135,24 @@ function update(dt) {
     // Update parachuting tanks
     [player, enemy].forEach(tank => {
         if (tank.state === "parachuting") {
-            tank.parachuteY += 2 * dt * 60; // Fall at 120 pixels per second
+            const fallSpeed = 120; // pixels per second
+            tank.parachuteY += fallSpeed * dt;
             tank.parachuteY += GAME.wind * 0.05 * dt * 60; // Barely affected by wind
             tank.animTimer += dt * 2; // For parachute animation if needed
 
             const groundY = getTerrainY(tank.x);
+            const remaining = groundY - tank.parachuteY;
+            const leadTime = 0.5; // seconds
+            const leadPixels = fallSpeed * leadTime; // 60 px before impact
+
+            // Play landing cue before splash/impact, not on impact
+            if (!tank.landingScheduled && remaining <= leadPixels && remaining > 0) {
+                tank.landingScheduled = true;
+                if (typeof SFX !== "undefined") {
+                    SFX.play("tankLanding", 1.0);
+                }
+            }
+
             if (tank.parachuteY + 1 >= groundY) {
                 tank.parachuteY = groundY;
                 tank.state = "idle";
@@ -157,11 +170,6 @@ function update(dt) {
                     seed: Math.random(),
                     soundPlayed: false
                 });
-
-                // Landing sound effect now guaranteed to play on impact
-                if (typeof SFX !== "undefined") {
-                    SFX.play("tankLanding", 1.0);
-                }
 
                 // Kick up a few particles for extra weight feel
                 for (let i = 0; i < 12; i++) {
