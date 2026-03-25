@@ -28,8 +28,9 @@ function spawnProjectile(tank, isHoming = false) {
     GAME.flashTimer = 0.05;
     GAME.state = "projectile";
 
-    // Track player shots
+    // Track shots
     if (tank === player) GAME.playerShots++;
+    else if (tank === enemy) GAME.enemyShots++;
 
     tank.state = "firing";
     tank.animFrame = 0;
@@ -230,10 +231,15 @@ function applyDamage(tank, amount) {
     tank.hp = clamp(tank.hp - amount, 0, tank.maxHp);
     tank.hitFlash = 0.18;
 
-    // Track player-dealt damage
-    if (GAME.projectile && GAME.projectile.owner === "Player" && tank === enemy) {
-        GAME.playerHits++;
-        GAME.playerDamageDealt += amount;
+    // Track damage dealt
+    if (GAME.projectile) {
+        if (GAME.projectile.shooter === player && tank === enemy) {
+            GAME.playerHits++;
+            GAME.playerDamageDealt += amount;
+        } else if (GAME.projectile.shooter === enemy && tank === player) {
+            GAME.enemyHits++;
+            GAME.enemyDamageDealt += amount;
+        }
     }
 
     if (tank.hp <= 0) {
@@ -308,12 +314,16 @@ function applyDamage(tank, amount) {
                 nextBtn.onclick = loadNextLevel;
             }
 
-            // Populate battle stats (still player-centric)
-            const acc = GAME.playerShots > 0 ? Math.round((GAME.playerHits / GAME.playerShots) * 100) : 0;
-            document.getElementById("statShots").textContent = GAME.playerShots;
-            document.getElementById("statHits").textContent = GAME.playerHits;
+            // Populate battle stats based on winner
+            const shots = isPlayerWinner ? GAME.playerShots : GAME.enemyShots;
+            const hits = isPlayerWinner ? GAME.playerHits : GAME.enemyHits;
+            const dmg = isPlayerWinner ? GAME.playerDamageDealt : GAME.enemyDamageDealt;
+            const acc = shots > 0 ? Math.min(100, Math.round((hits / shots) * 100)) : 0;
+            
+            document.getElementById("statShots").textContent = shots;
+            document.getElementById("statHits").textContent = hits;
             document.getElementById("statAccuracy").textContent = acc + "%";
-            document.getElementById("statDamage").textContent = Math.round(GAME.playerDamageDealt);
+            document.getElementById("statDamage").textContent = Math.round(dmg);
 
             document.getElementById("gameOverScreen").classList.remove("hidden");
         }, 1500);

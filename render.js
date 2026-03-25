@@ -587,13 +587,16 @@ function drawCenterStats() {
     ctx.fillText(wDir + " " + windText, px + 14, py + 32);
 
     // Stats block – right side
+    const currentShots = isPlayer ? GAME.playerShots : GAME.enemyShots;
+    const currentHits = isPlayer ? GAME.playerHits : GAME.enemyHits;
+
     ctx.textAlign = "right";
     ctx.font = "bold 9px 'Orbitron', sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.38)";
     ctx.fillText("SHOTS / HITS", px + panelW - 14, py + 18);
     ctx.font = "600 14px 'Rajdhani', sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.fillText(`${GAME.playerShots} / ${GAME.playerHits}`, px + panelW - 14, py + 32);
+    ctx.fillText(`${currentShots} / ${currentHits}`, px + panelW - 14, py + 32);
 }
 
 function drawBar(x, y, w, h, percent, color, label, angle, power) {
