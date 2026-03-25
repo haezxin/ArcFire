@@ -15,17 +15,21 @@ const SFX = (() => {
         tankLanding:  "tankLandingFX.mp3",
         napalmBurn:   "napalmBurnFX.mp3",
         powerUp:      "powerUpsFX.mp3",
+        bgm:          "BGmusic.mp3",
     };
 
     // Buffer pool per sound (max 4 concurrent instances each)
     const POOL_SIZE = 4;
     const pools = {};
-    const loops   = Object.create(null);
-    const fades   = Object.create(null); // active fade interval handles per name
-    const targets = Object.create(null); // target volume per name
+    const loops    = Object.create(null);
+    const fades    = Object.create(null); // active fade interval handles per name
+    const targets  = Object.create(null); // target volume per name
+    const baseVols = Object.create(null); // untracked original volume per name
 
     // Initialise pools on first interaction (deferred to satisfy autoplay policy)
-    let ready = false;
+    let ready  = false;
+    let sfxVol = 1.0;
+    let bgmVol = 1.0;
     function init() {
         if (ready) return;
         ready = true;
@@ -43,6 +47,11 @@ const SFX = (() => {
     document.addEventListener("click",     init, { once: true });
     document.addEventListener("keydown",   init, { once: true });
     document.addEventListener("touchstart",init, { once: true });
+    
+    // Auto-start background music on the first interaction
+    document.addEventListener("click",     () => startLoop("bgm", 0.45), { once: true });
+    document.addEventListener("keydown",   () => startLoop("bgm", 0.45), { once: true });
+    document.addEventListener("touchstart",() => startLoop("bgm", 0.45), { once: true });
 
     /**
      * play(name, volume?)
@@ -62,7 +71,7 @@ const SFX = (() => {
             clip.preload = "auto";
         }
 
-        clip.volume = Math.max(0, Math.min(1, volume));
+        clip.volume = Math.max(0, Math.min(1, volume * sfxVol));
         clip.currentTime = 0;
         clip.play().catch(() => {}); // Swallow NotAllowedError safely
     }
@@ -110,28 +119,34 @@ const SFX = (() => {
             loops[name]   = audio;
         }
 
+        baseVols[name] = volume;
         const clip  = loops[name];
-        const toVol = Math.max(0, Math.min(1, volume));
+        const mult  = (name === "bgm") ? bgmVol : sfxVol;
+        const toVol = Math.max(0, Math.min(1, volume * mult));
         targets[name] = toVol;
+        
+        const fadeMs = (name === "bgm") ? 4000 : FADE_IN_MS;
 
         if (clip.paused || clip.ended) {
             // Start silent, then fade in
             clip.volume      = 0;
             clip.currentTime = 0;
             clip.play().catch(() => {});
-            _fadeTo(clip, name, toVol, FADE_IN_MS, null);
+            _fadeTo(clip, name, toVol, fadeMs, null);
         } else {
             // Already playing – just fade to the new target volume
-            _fadeTo(clip, name, toVol, FADE_IN_MS, null);
+            _fadeTo(clip, name, toVol, fadeMs, null);
         }
     }
 
     function stopLoop(name) {
         const clip = loops[name];
         if (!clip || clip.paused) return;
+        
+        const fadeMs = (name === "bgm") ? 4000 : FADE_OUT_MS;
 
         // Fade out, then pause
-        _fadeTo(clip, name, 0, FADE_OUT_MS, () => {
+        _fadeTo(clip, name, 0, fadeMs, () => {
             clip.pause();
             clip.currentTime = 0;
         });
@@ -156,5 +171,27 @@ const SFX = (() => {
         }
     }
 
-    return { play, startLoop, stopLoop, init, warm };
+    function setSfxVolume(v) {
+        sfxVol = Math.max(0, Math.min(1, v));
+        // Update all playing SFX loops on the fly
+        for (let key in loops) {
+            if (key !== "bgm" && baseVols[key] != null && loops[key]) {
+                const tv = Math.max(0, Math.min(1, baseVols[key] * sfxVol));
+                targets[key] = tv;
+                if (!loops[key].paused && !fades[key]) loops[key].volume = tv;
+            }
+        }
+    }
+
+    function setBgmVolume(v) {
+        bgmVol = Math.max(0, Math.min(1, v));
+        // Update playing BGM loop on the fly
+        if (baseVols["bgm"] != null && loops["bgm"]) {
+             const tv = Math.max(0, Math.min(1, baseVols["bgm"] * bgmVol));
+             targets["bgm"] = tv;
+             if (!loops["bgm"].paused && !fades["bgm"]) loops["bgm"].volume = tv;
+        }
+    }
+
+    return { play, startLoop, stopLoop, init, warm, setSfxVolume, setBgmVolume };
 })();

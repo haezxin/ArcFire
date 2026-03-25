@@ -998,3 +998,157 @@ canvas {
 .tut-hint strong {
     color: var(--accent);
 }
+
+/* ── SFX Volume hold-to-launch joke widget ─────────────── */
+.sfx-vol-section {
+    width: 100%;
+    text-align: center;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 10px;
+    border-radius: 16px;
+    box-sizing: border-box;
+}
+
+.sfx-widget-label {
+    font-family: var(--font-title);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.sfx-widget {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 6px 4px;
+}
+
+/* Speaker button – bare, no box */
+.sfx-speaker {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    padding: 0;
+    border-radius: 8px;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: color 0.2s, filter 0.2s;
+    transform-origin: center;
+    color: var(--muted);
+}
+
+.sfx-speaker svg {
+    width: 28px;
+    height: 28px;
+    pointer-events: none;
+}
+
+.sfx-speaker:hover {
+    color: var(--accent);
+    filter: drop-shadow(0 0 6px rgba(255,213,79,0.45));
+}
+
+.sfx-speaker.sfx-charging {
+    cursor: grabbing;
+    color: #ff6b35;
+    filter: drop-shadow(0 0 10px rgba(255, 60, 20, 0.7));
+}
+
+/* Track + fill + thumb */
+.sfx-track-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sfx-track {
+    position: relative;
+    height: 10px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.08);
+    overflow: visible;
+}
+
+/* Transparent native range sits on top so the user can drag it */
+.sfx-range {
+    position: absolute;
+    inset: -10px -4px;
+    width: calc(100% + 8px);
+    height: calc(100% + 20px);
+    opacity: 0;
+    cursor: pointer;
+    margin: 0;
+    z-index: 3;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.sfx-fill {
+    position: absolute;
+    inset: 0;
+    right: auto;
+    background: linear-gradient(90deg, #ffd54f, #ffb300);
+    border-radius: 999px;
+    box-shadow: 0 0 8px rgba(255,213,79,0.35);
+    transition: width 0.25s ease;
+    pointer-events: none;
+}
+
+.sfx-thumb {
+    position: absolute;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(255,213,79,0.7), 0 2px 6px rgba(0,0,0,0.45);
+    transform: translate(-50%, -50%);
+    transition: left 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+}
+
+.sfx-thumb.sfx-thumb-impact {
+    animation: sfxThumbImpact 0.42s ease-out forwards;
+}
+
+@keyframes sfxThumbImpact {
+    0%   { transform: translate(-50%, -50%) scale(2.2);
+           box-shadow: 0 0 32px rgba(255,213,79,1), 0 0 8px rgba(0,0,0,0.5); }
+    55%  { transform: translate(-50%, -50%) scale(0.8); }
+    80%  { transform: translate(-50%, -50%) scale(1.1); }
+    100% { transform: translate(-50%, -50%) scale(1);
+           box-shadow: 0 0 10px rgba(255,213,79,0.7), 0 2px 6px rgba(0,0,0,0.45); }
+}
+
+
+/* Pct label */
+.sfx-pct {
+    flex-shrink: 0;
+    font-family: var(--font-title);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 44px;
+    text-align: right;
+}
+
+
+
+.sfx-hint strong {
+    color: var(--accent);
+    font-style: normal;
+}

@@ -187,9 +187,48 @@
                                         <option value="3">Endless</option>
                                     </select>
                                 </div>
+
+                                <!-- ── SFX Volume hold-to-launch gag ── -->
+                                <div class="sfx-vol-section" style="margin-bottom: 8px;">
+                                    <div class="sfx-widget-label">SFX VOLUME</div>
+                                    <div class="sfx-widget">
+                                        <button id="sfxSpeakerBtn" class="sfx-speaker" title="Hold &amp; release…">
+                                            <svg id="sfxSpeakerIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                                            </svg>
+                                        </button>
+                                        <div class="sfx-track-wrap">
+                                            <div class="sfx-track" id="sfxTrack">
+                                                <div class="sfx-fill" id="sfxFill"></div>
+                                                <div class="sfx-thumb" id="sfxThumb"></div>
+                                                <input type="range" id="sfxRange" class="sfx-range" min="0" max="100" value="80">
+                                            </div>
+                                        </div>
+                                        <span class="sfx-pct" id="sfxPct">80%</span>
+                                    </div>
+                                </div>
+
+                                <!-- ── MUSIC Volume hold-to-launch gag ── -->
+                                <div class="sfx-vol-section">
+                                    <div class="sfx-widget-label">MUSIC VOLUME</div>
+                                    <div class="sfx-widget">
+                                        <button id="bgmSpeakerBtn" class="sfx-speaker" title="Hold &amp; release…">
+                                            <svg id="bgmSpeakerIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                                            </svg>
+                                        </button>
+                                        <div class="sfx-track-wrap">
+                                            <div class="sfx-track" id="bgmTrack">
+                                                <div class="sfx-fill" id="bgmFill"></div>
+                                                <div class="sfx-thumb" id="bgmThumb"></div>
+                                                <input type="range" id="bgmRange" class="sfx-range" min="0" max="100" value="80">
+                                            </div>
+                                        </div>
+                                        <span class="sfx-pct" id="bgmPct">80%</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
 
                         <button id="startBtn" class="primary-btn">Engage Combat</button>
                     </div>
@@ -257,6 +296,174 @@
     <script src="combat.js"></script>
     <script src="render.js"></script>
     <script src="game.js"></script>
+
+    <!-- Audio Widgets -->
+    <script>
+    (function () {
+        const MAX_HOLD = 2200;
+
+        function createVolumeWidget(prefix, initVol, applyEngineVol) {
+            let holdStart  = null;
+            let chargeRaf  = null;
+            let currentVol = initVol;
+
+            const speakerBtn  = document.getElementById(prefix + 'SpeakerBtn');
+            const track       = document.getElementById(prefix + 'Track');
+            const fill        = document.getElementById(prefix + 'Fill');
+            const thumb       = document.getElementById(prefix + 'Thumb');
+            const pctLabel    = document.getElementById(prefix + 'Pct');
+            const range       = document.getElementById(prefix + 'Range');
+            const speakerSvg  = document.getElementById(prefix + 'SpeakerIcon');
+            const speakerPath = speakerSvg ? speakerSvg.querySelector('path') : null;
+
+            if (!speakerBtn) return;
+
+            function applyVolume(vol) {
+                currentVol = vol;
+                const pct  = Math.round(vol * 100);
+                fill.style.width = pct + '%';
+                thumb.style.left = pct + '%';
+                pctLabel.textContent = pct + '%';
+                if (range) range.value = pct;
+                
+                if (applyEngineVol && typeof SFX !== 'undefined') {
+                    applyEngineVol(vol);
+                }
+            }
+
+            applyVolume(currentVol);
+
+            if (range) {
+                range.addEventListener('input', () => {
+                    applyVolume(range.value / 100);
+                });
+            }
+
+            function startCharge(e) {
+                e.preventDefault();
+                if (holdStart) return;
+                holdStart = Date.now();
+                speakerBtn.classList.add('sfx-charging');
+                tickCharge();
+            }
+
+            function tickCharge() {
+                chargeRaf = requestAnimationFrame(function tick() {
+                    if (!holdStart) return;
+                    const held   = Math.min((Date.now() - holdStart) / MAX_HOLD, 1);
+                    const scale  = 1 + held * 0.55;
+                    const jitter = (Math.random() - 0.5) * 12 * held;
+                    
+                    speakerBtn.style.transform = `scale(${scale}) rotate(${jitter}deg)`;
+                    if (speakerPath) speakerPath.style.opacity = 0.4 + held * 0.6;
+                    
+                    chargeRaf = requestAnimationFrame(tick);
+                });
+            }
+
+            function releaseCharge() {
+                if (!holdStart) return;
+                const holdMs = Math.max(0, Date.now() - holdStart);
+                holdStart = null;
+
+                cancelAnimationFrame(chargeRaf);
+                speakerBtn.classList.remove('sfx-charging');
+                speakerBtn.style.transform = '';
+                if (speakerPath) speakerPath.style.opacity = '';
+
+                if (holdMs > 300) {
+                    const targetVol = Math.min(holdMs / MAX_HOLD, 1);
+                    launchBall(targetVol);
+                }
+            }
+
+            function launchBall(targetVol) {
+                const spRect = speakerBtn.getBoundingClientRect();
+                const trRect = track.getBoundingClientRect();
+
+                const startX = spRect.left  + spRect.width  * 0.5;
+                const startY = spRect.top   + spRect.height * 0.5;
+                const endX   = trRect.left  + trRect.width  * targetVol;
+                const endY   = trRect.top   + trRect.height * 0.5;
+
+                const dist = Math.abs(endX - startX);
+                const dur  = Math.max(400, Math.min(850, dist * 1.3));
+                const peak = 60 + dist * 0.18;
+
+                thumb.style.opacity = '0';
+
+                const ball = Object.assign(document.createElement('div'), { className: 'sfx-flying-ball' });
+                ball.style.cssText = `
+                    position:fixed; border-radius:50%; pointer-events:none; z-index:9999;
+                    width:20px; height:20px; background: var(--accent);
+                    box-shadow: 0 0 18px rgba(255,213,79,0.95), 0 2px 6px rgba(0,0,0,0.5);
+                    transform: translate(-50%,-50%); left:${startX}px; top:${startY}px;
+                `;
+                document.body.appendChild(ball);
+
+                const ghost = Object.assign(document.createElement('div'), {});
+                ghost.style.cssText = `
+                    position:fixed; border-radius:50%; pointer-events:none; z-index:9998;
+                    width:10px; height:10px; background: rgba(255,200,60,0.55);
+                    box-shadow: 0 0 8px rgba(255,180,30,0.7);
+                    transform: translate(-50%,-50%); left:${startX}px; top:${startY}px;
+                `;
+                document.body.appendChild(ghost);
+
+                const t0 = performance.now();
+                function easeOut(t) { return 1 - Math.pow(1 - t, 2.8); }
+
+                (function frame(now) {
+                    const t = Math.min((now - t0) / dur, 1);
+                    const e = easeOut(t);
+                    const x = startX + (endX - startX) * e;
+                    const y = startY + (endY - startY) * e - peak * 4 * t * (1 - t);
+
+                    ball.style.left = x + 'px';
+                    ball.style.top  = y + 'px';
+
+                    const tg = Math.max(0, (now - t0 - 80) / dur);
+                    const eg = easeOut(Math.min(tg, 1));
+                    ghost.style.left = (startX + (endX - startX) * eg) + 'px';
+                    ghost.style.top  = (startY + (endY - startY) * eg - peak * 4 * tg * (1 - tg)) + 'px';
+
+                    if (t < 1) {
+                        requestAnimationFrame(frame);
+                        return;
+                    }
+
+                    ball.remove();
+                    ghost.remove();
+                    thumb.style.opacity = '';
+                    applyVolume(targetVol);
+
+                    thumb.classList.add('sfx-thumb-impact');
+                    setTimeout(() => thumb.classList.remove('sfx-thumb-impact'), 420);
+
+                    if (targetVol > 0.5) {
+                        track.animate([
+                            { transform: 'translateX(-4px)' },
+                            { transform: 'translateX(4px)'  },
+                            { transform: 'translateX(-3px)' },
+                            { transform: 'translateX(3px)'  },
+                            { transform: 'translateX(0)'    }
+                        ], { duration: 280, easing: 'ease-out' });
+                    }
+                })(t0);
+            }
+
+            speakerBtn.addEventListener('mousedown',  startCharge);
+            speakerBtn.addEventListener('touchstart', startCharge, { passive: false });
+            document.addEventListener('mouseup',  releaseCharge);
+            document.addEventListener('touchend', releaseCharge);
+
+            return { applyVolume };
+        }
+
+        const sfxWidget = createVolumeWidget('sfx', 0.8, (v) => { if(typeof SFX !== 'undefined' && SFX.setSfxVolume) SFX.setSfxVolume(v); });
+        const bgmWidget = createVolumeWidget('bgm', 0.45, (v) => { if(typeof SFX !== 'undefined' && SFX.setBgmVolume) SFX.setBgmVolume(v); });
+
+    })();</script>
 </body>
 
 </html>
