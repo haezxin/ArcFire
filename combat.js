@@ -1,26 +1,30 @@
-function spawnProjectile(tank, isHoming = false) {
+function spawnProjectile(tank, isHoming = false, type = "Standard") {
     const angle = tank.angle * Math.PI / 180;
     const power = tank.power * 0.165;
-    const muzzle = tank.muzzlePoint(); // Keep as function call
+    const muzzle = tank.muzzlePoint();
 
-    GAME.projectile = {
-        owner: tank.name, // Keep owner
+    const p = {
+        owner: tank.name,
         x: muzzle.x,
         y: muzzle.y,
         vx: Math.cos(angle) * power,
         vy: Math.sin(angle) * power,
-        radius: 5, // Keep radius
+        radius: 5,
         trail: [],
         homing: isHoming,
         animTimer: 0,
-        shooter: tank
+        shooter: tank,
+        type: type,
+        isSplit: false
     };
+
+    GAME.projectiles.push(p);
 
     GAME.effects.push({
         type: "muzzle",
         x: muzzle.x,
         y: muzzle.y,
-        angle: angle, // Use 'angle' here
+        angle: angle,
         timer: 0.16,
         max: 0.16
     });
@@ -43,13 +47,13 @@ function spawnProjectile(tank, isHoming = false) {
 }
 
 function fireCurrentTank() {
-    if (GAME.projectile || GAME.winner) return;
+    if (GAME.projectiles.length > 0 || GAME.winner) return;
 
-    if (GAME.turn === "player") {
-        spawnProjectile(player);
-    } else {
-        spawnProjectile(enemy);
-    }
+    const tank = GAME.turn === "player" ? player : enemy;
+    const ammoIndex = tank.selectedAmmoSlot;
+    const ammoName = GAME.ammoTypes[ammoIndex];
+    
+    spawnProjectile(tank, false, ammoName);
 }
 
 function solveBallisticEstimate(dxAbs, dy, launchDegrees, gravity) {
@@ -199,70 +203,191 @@ function canClimb(tank, dir, dt) {
 }
 
 function updateProjectile(dt) {
-    if (!GAME.projectile) return;
+    if (GAME.projectiles.length === 0) return;
 
-    const p = GAME.projectile;
+    for (let i = GAME.projectiles.length - 1; i >= 0; i--) {
+        const p = GAME.projectiles[i];
 
-    // Make projectiles leave a stronger visual trail
-    p.trail.push({ x: p.x, y: p.y, life: 0.65 });
-    if (p.trail.length > 24) p.trail.shift();
+        // Trail
+        p.trail.push({ x: p.x, y: p.y, life: 0.65 });
+        if (p.trail.length > 24) p.trail.shift();
 
-    // Apply enhanced wind influence to make effects more visible in flight
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vy += GAME.gravity;
-    p.vx += GAME.wind * 1.15;
+        // Physics
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += GAME.gravity;
+        p.vx += GAME.wind * 1.15;
 
-    if (p.homing) {
-        const target = p.shooter === player ? enemy : player;
-        const tx = target.x;
-        const ty = target.y - 24 * target.scale;
-        const dx = tx - p.x;
-        const dy = ty - p.y;
-        const dist = Math.hypot(dx, dy);
+        // Homing
+        if (p.homing) {
+            const target = p.shooter === player ? enemy : player;
+            const tx = target.x;
+            const ty = target.y - 24 * target.scale;
+            const dx = tx - p.x;
+            const dy = ty - p.y;
+            const dist = Math.hypot(dx, dy);
 
-        if (dist > 5) {
-            const steerSpeed = 0.45;
-            const desiredVx = (dx / dist) * 12;
-            const desiredVy = (dy / dist) * 12;
-            p.vx += (desiredVx - p.vx) * steerSpeed;
-            p.vy += (desiredVy - p.vy) * steerSpeed;
+            if (dist > 5) {
+                const steerSpeed = 0.45;
+                const desiredVx = (dx / dist) * 12;
+                const desiredVy = (dy / dist) * 12;
+                p.vx += (desiredVx - p.vx) * steerSpeed;
+                p.vy += (desiredVy - p.vy) * steerSpeed;
+            }
+            p.animTimer += dt * 15;
         }
-        p.animTimer += dt * 15;
+
+        for (const t of p.trail) t.life -= dt;
+        p.trail = p.trail.filter(t => t.life > 0);
+
+        // Bounds
+        if (p.x < -20 || p.x > GAME.width + 20 || p.y > GAME.height + 60) {
+            GAME.projectiles.splice(i, 1);
+            if (GAME.projectiles.length === 0) endTurn();
+            continue;
+        }
+
+        const terrainY = getTerrainY(p.x);
+        let hit = false;
+        let collider = null;
+
+        // Collision Check
+        if (p.y >= terrainY - 2) {
+            hit = true;
+        } else {
+            collider = checkTankHit(p, player) || checkTankHit(p, enemy);
+            if (!collider) collider = checkObstacleHit(p);
+            if (collider) hit = true;
+        }
+
+        if (hit) {
+            handleProjectileImpact(p, i, terrainY, collider);
+        }
     }
+}
 
-    for (const t of p.trail) t.life -= dt;
-    p.trail = p.trail.filter(t => t.life > 0);
+function handleProjectileImpact(p, index, terrainY, collider) {
+    const isCluster = p.type === "Cluster" && !p.isSplit;
+    const isOil = p.type === "Oil";
+    const isNapalm = p.type === "Napalm";
 
-    const terrainY = getTerrainY(p.x);
+    if (isCluster) {
+        // Cluster splits into 2 smaller bombs.
+        // Those sub-bombs use the existing Submunition impact path (smaller blast/damage).
+        const baseSpeed = Math.hypot(p.vx, p.vy);
+        const baseAngle = Math.atan2(p.vy, p.vx);
 
-    if (p.x < -20 || p.x > GAME.width + 20 || p.y > GAME.height + 30) {
-        GAME.projectile = null;
-        endTurn();
-        return;
-    }
+        const shooterTank = p.shooter || (p.owner === "Player" ? player : enemy);
 
-    if (p.y >= terrainY - 2) {
-        explode(p.x, terrainY - 2, 42, null);
-        GAME.projectile = null;
-        endTurn();
-        return;
-    }
+        // Remove the original cluster shell immediately.
+        GAME.projectiles.splice(index, 1);
 
-    const hitTank = checkTankHit(p, player) || checkTankHit(p, enemy);
-    if (hitTank) {
-        explode(p.x, p.y, 48, hitTank);
-        GAME.projectile = null;
-        endTurn();
-        return;
-    }
+        // Small visual pop (no terrain carving/damage by itself).
+        GAME.effects.push({
+            type: "explosion",
+            x: p.x,
+            y: p.y,
+            radius: 26,
+            timer: 0.28,
+            max: 0.28
+        });
 
-    const hitObs = checkObstacleHit(p);
-    if (hitObs) {
-        explode(p.x, p.y, 42, null);
-        GAME.projectile = null;
-        endTurn();
-        return;
+        // Spawn two submunitions with opposite spread.
+        const subSpeed = Math.max(5, baseSpeed * 0.45);
+        const spread = 18 * Math.PI / 180;
+
+        for (let i = 0; i < 2; i++) {
+            const sign = i === 0 ? -1 : 1;
+            const ang = baseAngle + sign * spread + (Math.random() - 0.5) * spread * 0.35;
+
+            GAME.projectiles.push({
+                owner: shooterTank ? shooterTank.name : p.owner,
+                x: p.x,
+                y: p.y,
+                vx: Math.cos(ang) * subSpeed,
+                vy: Math.sin(ang) * subSpeed,
+                radius: 4.6,
+                trail: [],
+                homing: false,
+                animTimer: 0,
+                shooter: shooterTank,
+                type: "Submunition",
+                isSplit: true
+            });
+        }
+
+        // endTurn() will be called automatically once all submunitions finish.
+        if (GAME.projectiles.length === 0) endTurn();
+    } else if (isOil) {
+        // Oil Impact
+        const splashRadius = 68;
+        // Oil does NOT carve craters and does NOT deal damage.
+        // It only immobilizes tanks inside the puddle radius.
+        
+        // Puddle effect
+        GAME.effects.push({
+            type: "oilPuddle",
+            x: p.x,
+            y: terrainY,
+            radius: splashRadius,
+            timer: 3.5,
+            max: 3.5
+        });
+
+        // Apply Stuck Effect
+        [player, enemy].forEach(tank => {
+            const dist = Math.abs(tank.x - p.x);
+            if (dist < splashRadius + 20) {
+                // How many of this tank's own turns it cannot move for.
+                tank.stuckTurns = 4;
+                GAME.effects.push({
+                    type: "text",
+                    x: tank.x,
+                    y: tank.y - 72,
+                    text: "IMMOBILIZED",
+                    color: "#f1c40f",
+                    timer: 1.8,
+                    max: 1.8
+                });
+            }
+        });
+
+        GAME.projectiles.splice(index, 1);
+        if (GAME.projectiles.length === 0) endTurn();
+    } else if (isNapalm) {
+        // Napalm Impact
+        // - No crater
+        // - Small direct damage only if we hit a tank
+        // - Burns for 2 turns in a zone similar to the oil puddle
+        const burnRadius = 76;
+
+        // If collision resolution landed on terrain (no collider), still detect direct tank hit.
+        const hitTank = (collider instanceof Tank) ? collider : (checkTankHit(p, player) || checkTankHit(p, enemy));
+        const centerY = hitTank ? hitTank.y : terrainY;
+        GAME.burnZones.push({
+            x: p.x,
+            y: centerY,
+            radius: burnRadius,
+            turnsLeft: 2,
+            skipNextTick: true // Don't apply burn damage immediately on impact/endTurn
+        });
+
+        if (hitTank) {
+            // "Little damage" on direct hit; the burn does the rest.
+            applyDamage(hitTank, 12);
+        }
+
+        GAME.projectiles.splice(index, 1);
+        if (GAME.projectiles.length === 0) endTurn();
+    } else {
+        // Standard Impact
+        const radius = p.type === "Submunition" ? 28 : 42;
+        const damageMult = p.type === "Submunition" ? 0.6 : 1.0;
+        
+        explode(p.x, p.y, radius, (collider instanceof Tank ? collider : null), damageMult);
+        GAME.projectiles.splice(index, 1);
+        
+        if (GAME.projectiles.length === 0) endTurn();
     }
 }
 
@@ -404,20 +529,20 @@ function applyDamage(tank, amount) {
     }
 }
 
-function explode(x, y, radius, directTank) {
+function explode(x, y, radius, directTank, damageMult = 1.0) {
     carveTerrain(x, y, Math.max(radius, 42));
-    GAME.screenShake = Math.max(GAME.screenShake, 8);
+    GAME.screenShake = Math.max(GAME.screenShake, 8 * damageMult);
 
     // ── SFX ──
     if (typeof SFX !== "undefined") {
-        SFX.play("shellHit", Math.min(1, 0.6 + radius / 80));
+        SFX.play("shellHit", Math.min(1, (0.6 + radius / 80) * damageMult));
     }
 
     GAME.effects.push({
         type: "explosion",
         x,
         y,
-        radius,
+        radius: radius * damageMult,
         timer: 0.55,
         max: 0.55
     });
@@ -428,7 +553,7 @@ function explode(x, y, radius, directTank) {
         y,
         timer: 1.1,
         max: 1.1,
-        radius: radius * 0.8
+        radius: radius * 0.8 * damageMult
     });
 
     // Add level-specific crater decoration
@@ -436,13 +561,13 @@ function explode(x, y, radius, directTank) {
     const craterNum = Math.floor(Math.random() * 3) + 1;
     GAME.craters.push({
         x, y,
-        r: radius * 1.2,
+        r: radius * 1.2 * damageMult,
         key: `crater${craterNum}_war${lv}_${GAME.theme}`,
         rotation: (Math.random() - 0.5) * 0.6
     });
     if (GAME.craters.length > 20) GAME.craters.shift();
 
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < Math.floor(12 * damageMult); i++) {
         GAME.debris.push({
             x,
             y,
@@ -467,7 +592,8 @@ function explode(x, y, radius, directTank) {
         const dist = Math.hypot(tx - x, ty - y);
 
         if (dist <= radius + 36 * tank.scale) {
-            const damage = Math.max(10, Math.round(38 - dist * 0.38));
+            const baseDamage = radius * 0.9;
+            const damage = Math.max(5, Math.round((baseDamage - dist * 0.38) * damageMult));
             applyDamage(tank, damage);
         }
     });
@@ -477,17 +603,20 @@ function explode(x, y, radius, directTank) {
         let oy = obs.y !== undefined ? obs.y : getTerrainY(obs.x);
         const dist = Math.hypot(obs.x - x, (oy - obs.height / 2) - y);
         if (dist <= radius + Math.max(obs.width, obs.height) / 2 + 10) {
-            const damage = Math.max(15, Math.round(50 - dist * 0.45));
+            const damage = Math.max(10, Math.round((50 - dist * 0.45) * damageMult));
             obs.hp -= damage;
             if (obs.hp <= 0) obs.alive = false;
         }
     });
 
-    if (directTank) applyDamage(directTank, 8);
+    if (directTank) applyDamage(directTank, 8 * damageMult);
 }
 
 function endTurn() {
     if (GAME.winner || GAME.state === "respawning") return;
+
+    // The tank whose turn we are ending (status ticks should happen when the tank acts).
+    const actorTank = GAME.turn === "player" ? player : enemy;
 
     GAME.state = "aiming";
     GAME.turn = GAME.turn === "player" ? "enemy" : "player";
@@ -497,6 +626,10 @@ function endTurn() {
     // Completely randomizes wind direction and strength each turn
     GAME.wind = (Math.random() * 2 - 1) * windMax;
 
+    // Only tick stuck status for the tank that just finished its turn.
+    if (actorTank.stuckTurns > 0) actorTank.stuckTurns--;
+
+    // Keep existing behavior for other turn-based effects.
     [player, enemy].forEach(tank => {
         if (tank.effectTurns > 0) {
             tank.effectTurns--;
@@ -505,6 +638,34 @@ function endTurn() {
             }
         }
     });
+
+    // Napalm burn zones: apply damage while they last.
+    if (GAME.burnZones && GAME.burnZones.length > 0) {
+        const burnDamagePerTurn = 7; // "Little damage" over time
+        for (let i = GAME.burnZones.length - 1; i >= 0; i--) {
+            const zone = GAME.burnZones[i];
+
+            if (zone.skipNextTick) {
+                zone.skipNextTick = false;
+                continue;
+            }
+
+            [player, enemy].forEach(tank => {
+                if (!tank.alive) return;
+                const distX = Math.abs(tank.x - zone.x);
+                if (distX <= zone.radius) {
+                    applyDamage(tank, burnDamagePerTurn);
+                }
+            });
+
+            if (GAME.winner) return;
+
+            zone.turnsLeft--;
+            if (zone.turnsLeft <= 0) {
+                GAME.burnZones.splice(i, 1);
+            }
+        }
+    }
 
     if (Math.random() < 0.1) {
         const rVal = Math.random();
@@ -546,6 +707,7 @@ function updatePlayerInput(dt) {
 
     const isPlayerTurn = GAME.turn === 'player';
     const tank = isPlayerTurn ? player : enemy;
+    const isStuck = tank.stuckTurns > 0;
 
     // determine control mapping depending on mode and which tank is active
     let leftKey, rightKey, angUpKey, angDownKey, powDownKey, powUpKey;
@@ -568,16 +730,19 @@ function updatePlayerInput(dt) {
         else minX = Math.max(minX, obs.x + obs.width / 2 + 42);
     });
 
-    if (keys[leftKey]) {
-        if (canClimb(tank, -1, dt)) {
-            tank.x = clamp(tank.x - moveSpeed * dt, minX, maxX);
-            moved = true;
+    // Stuck tanks cannot move horizontally, but can still change angle/power.
+    if (!isStuck) {
+        if (keys[leftKey]) {
+            if (canClimb(tank, -1, dt)) {
+                tank.x = clamp(tank.x - moveSpeed * dt, minX, maxX);
+                moved = true;
+            }
         }
-    }
-    if (keys[rightKey]) {
-        if (canClimb(tank, 1, dt)) {
-            tank.x = clamp(tank.x + moveSpeed * dt, minX, maxX);
-            moved = true;
+        if (keys[rightKey]) {
+            if (canClimb(tank, 1, dt)) {
+                tank.x = clamp(tank.x + moveSpeed * dt, minX, maxX);
+                moved = true;
+            }
         }
     }
 
@@ -604,6 +769,19 @@ function updateEnemyAI(dt) {
     if (GAME.turn !== "enemy" || GAME.winner) return;
 
     if (GAME.state === "moving") {
+        // If stuck, skip movement this turn and go straight to aiming/shooting.
+        if (enemy.stuckTurns > 0) {
+            enemy.state = "idle";
+            GAME.state = "thinking";
+            setTimeout(() => {
+                if (!GAME.winner) {
+                    GAME.state = "aiming";
+                    applyAIShot();
+                }
+            }, 600);
+            return;
+        }
+
         let minX = player.x + 150;
         let maxX = GAME.rightBound; // Restored hard bounds
         GAME.obstacles.forEach(obs => {

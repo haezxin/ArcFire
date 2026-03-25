@@ -10,6 +10,7 @@ function resetGame() {
     GAME.screenShake = 0;
     GAME.powerUps = [];
     GAME.craters = [];
+    GAME.burnZones = [];
 
     player.x = 130;
     enemy.x = 960;
@@ -241,6 +242,7 @@ function render() {
     drawBackground();
     drawTerrain();
     drawCraters();
+    drawBurnZones();
     drawObstacles();
     drawTank(player);
     drawTank(enemy);
@@ -287,6 +289,17 @@ document.addEventListener("keydown", e => {
     const key = e.key.toLowerCase();
     keys[key] = true;
 
+    // Ammo selection (1-4 keys)
+    const activeTank = GAME.turn === "player" ? player : enemy;
+    
+    // Prevent switching ammo if stuck? 
+    // Usually only movement is restricted. I'll allow ammo switching.
+
+    if (key === "1") activeTank.selectedAmmoSlot = 0;
+    if (key === "2") activeTank.selectedAmmoSlot = 1;
+    if (key === "3") activeTank.selectedAmmoSlot = 2;
+    if (key === "4") activeTank.selectedAmmoSlot = 3;
+
     if (e.key === "Escape") {
         e.preventDefault();
         if (GAME.state === "gameover" || GAME.state === "intro") return;
@@ -297,14 +310,14 @@ document.addEventListener("keydown", e => {
     if (e.code === "Space" || key === " ") {
         e.preventDefault();
         if (GAME.paused) return;
-        if (GAME.turn === "player" && GAME.state === "aiming" && !GAME.projectile && !GAME.winner) {
+        if (GAME.turn === "player" && GAME.state === "aiming" && GAME.projectiles.length === 0 && !GAME.winner) {
             fireCurrentTank();
         }
     }
     // Multiplayer: allow Enter to fire when it's player 2's (enemy) turn
     if (e.key === "Space" || key === " ") {
         e.preventDefault();
-        if (GAME.mode === 'multiplayer' && GAME.turn === 'enemy' && GAME.state === 'aiming' && !GAME.projectile && !GAME.winner) {
+        if (GAME.mode === 'multiplayer' && GAME.turn === 'enemy' && GAME.state === 'aiming' && GAME.projectiles.length === 0 && !GAME.winner) {
             fireCurrentTank();
         }
     }

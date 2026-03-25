@@ -22,7 +22,7 @@ const GAME = {
     stars: [],
     clouds: [],
     effects: [],
-    projectile: null,
+    projectiles: [],
     debris: [],
     obstacles: [],
     powerUps: [],
@@ -40,9 +40,11 @@ const GAME = {
     hintTimer: 6,               // seconds to show first-turn hint
     playerPowerUp: null,        // "size" | "missile" | null
     craters: [],                // Dynamic crater images on terrain
+    burnZones: [],             // Napalm burn areas (tick by turns)
     level: 1,                   // Current stage layout
     theme: "bright",            // "bright" | "pale"
     killedEnemies: 0,           // Number of enemies killed in Endless mode
+    ammoTypes: ["Standard", "Cluster", "Oil", "Napalm"],
 };
 
 const keys = Object.create(null);

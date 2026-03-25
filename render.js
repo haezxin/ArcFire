@@ -160,6 +160,19 @@ function drawTank(tank) {
     }
 
     ctx.restore();
+
+    // Stuck Indicator (Oil drips/puddle)
+    if (tank.stuckTurns > 0) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        // Dark puddle under tank
+        ctx.beginPath();
+        ctx.ellipse(0, 5, 45 * tank.scale, 10 * tank.scale, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
 }
 
 function drawAimGuide() {
@@ -199,56 +212,73 @@ function drawAimGuide() {
 }
 
 function drawProjectile() {
-    const p = GAME.projectile;
-    if (!p) return;
+    if (GAME.projectiles.length === 0) return;
 
-    ctx.save();
+    for (const p of GAME.projectiles) {
+        ctx.save();
 
-    if (p.trail.length > 1) {
-        ctx.beginPath();
-        for (let i = 0; i < p.trail.length; i++) {
-            const t = p.trail[i];
-            const alpha = (t.life * 0.7) * (i / p.trail.length);
-            if (i === 0) ctx.moveTo(t.x, t.y);
-            else ctx.lineTo(t.x, t.y);
+        if (p.trail.length > 1) {
+            ctx.beginPath();
+            for (let i = 0; i < p.trail.length; i++) {
+                const t = p.trail[i];
+                const alpha = (t.life * 0.7) * (i / p.trail.length);
+                if (i === 0) ctx.moveTo(t.x, t.y);
+                else ctx.lineTo(t.x, t.y);
+            }
+            ctx.strokeStyle = "rgba(234,239,255,0.85)";
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.55;
+            ctx.stroke();
         }
-        ctx.strokeStyle = "rgba(234,239,255,0.85)";
-        ctx.lineWidth = 2;
-        ctx.globalAlpha = 0.55;
-        ctx.stroke();
-    }
 
-    for (const t of p.trail) {
-        ctx.globalAlpha = t.life * 0.7;
-        ctx.fillStyle = "rgba(248,248,255,0.97)";
-        ctx.beginPath();
-        ctx.arc(t.x, t.y, 4.0 * t.life, 0, Math.PI * 2);
-        ctx.fill();
-    }
+        for (const t of p.trail) {
+            ctx.globalAlpha = t.life * 0.7;
+            ctx.fillStyle = "rgba(248,248,255,0.97)";
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, 4.0 * t.life, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
-    ctx.restore();
+        ctx.restore();
 
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    const angle = Math.atan2(p.vy, p.vx);
-    ctx.rotate(angle);
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        const angle = Math.atan2(p.vy, p.vx);
+        ctx.rotate(angle);
 
-    if (p.homing) {
-        const frame = Math.floor(p.animTimer) % 2 === 0 ? "missile1" : "missile2";
-        const img = IMAGES[frame];
-        if (img) {
-            ctx.drawImage(img, -24, -12, 48, 24);
+        if (p.homing) {
+            const frame = Math.floor(p.animTimer) % 2 === 0 ? "missile1" : "missile2";
+            const img = IMAGES[frame];
+            if (img) {
+                ctx.drawImage(img, -24, -12, 48, 24);
+            } else if (p.type === "Oil") {
+            // Tumbling Barrel
+            ctx.scale(1.2, 1.2);
+            ctx.rotate(GAME.time * 8); // Tumble animation
+            ctx.fillStyle = "#333";
+            roundRect(ctx, -8, -10, 16, 20, 4, true, false);
+            // Barrel Ribs
+            ctx.fillStyle = "#444";
+            ctx.fillRect(-8, -6, 16, 2);
+            ctx.fillRect(-8, 4, 16, 2);
+            // Label placeholder
+            ctx.fillStyle = "#f1c40f";
+            ctx.fillRect(-4, -2, 8, 4);
         } else {
-            ctx.fillStyle = "#ff4444";
-            ctx.fillRect(-12, -4, 24, 8);
+                ctx.fillStyle = "#ff4444";
+                ctx.fillRect(-12, -4, 24, 8);
+            }
+        } else {
+            // Scale projectile size if it's a submunition
+            const s = p.radius / 5;
+            ctx.scale(s, s);
+            ctx.fillStyle = "#6b7179";
+            roundRect(ctx, -8, -4, 16, 8, 3, true, false);
+            ctx.fillStyle = "#c7ccd3";
+            roundRect(ctx, 2, -3, 6, 6, 2, true, false);
         }
-    } else {
-        ctx.fillStyle = "#6b7179";
-        roundRect(ctx, -8, -4, 16, 8, 3, true, false);
-        ctx.fillStyle = "#c7ccd3";
-        roundRect(ctx, 2, -3, 6, 6, 2, true, false);
+        ctx.restore();
     }
-    ctx.restore();
 }
 
 function drawObstacles() {
@@ -390,6 +420,10 @@ function drawEffects() {
             }
             ctx.restore();
         }
+
+        if (effect.type === "oilPuddle") {
+            drawOilPuddle(effect);
+        }
     }
 
     GAME.debris.forEach(d => {
@@ -528,6 +562,9 @@ function drawCanvasHUD() {
 
     // Center Display (Round, Score, Wind, Turn)
     drawCenterStats();
+
+    // Ammo Hotbar (Bottom Center)
+    drawAmmoHotbar();
 }
 
 function drawCenterStats() {
@@ -816,6 +853,71 @@ function drawPowerUps() {
     });
 }
 
+function drawOilPuddle(e) {
+    const alpha = Math.min(1.0, e.timer * 1.5);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(e.x, e.y);
+    
+    // Main dark puddle
+    ctx.fillStyle = "rgba(10, 10, 10, 0.85)";
+    ctx.beginPath();
+    ctx.ellipse(0, 5, e.radius, e.radius * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Oil sheen (iridescent highlights)
+    ctx.strokeStyle = "rgba(60, 60, 80, 0.4)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, 5, e.radius * 0.8, e.radius * 0.2, 0.1, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    ctx.restore();
+}
+
+function drawBurnZones() {
+    if (!GAME.burnZones || GAME.burnZones.length === 0) return;
+
+    for (const z of GAME.burnZones) {
+        // z.turnsLeft is in turn ticks; use it to make the zone fade as it expires.
+        const intensity = z.turnsLeft / 2; // 2 is the initial burn duration we set
+        const flicker = 0.85 + Math.sin(GAME.titleTimer * 10 + z.x * 0.01) * 0.15;
+        const alpha = Math.max(0, Math.min(1, intensity)) * 0.65 * flicker;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(z.x, z.y);
+
+        // Hot core glow
+        const grad = ctx.createRadialGradient(0, 0, 4, 0, 0, z.radius);
+        grad.addColorStop(0, "rgba(255, 210, 90, 0.55)");
+        grad.addColorStop(0.25, "rgba(255, 130, 40, 0.38)");
+        grad.addColorStop(0.7, "rgba(200, 40, 20, 0.18)");
+        grad.addColorStop(1, "rgba(90, 10, 10, 0)");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(0, 5, z.radius, z.radius * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Flame tips
+        for (let i = 0; i < 7; i++) {
+            const t = i / 7;
+            const ang = t * Math.PI * 2 + (GAME.titleTimer * 0.8);
+            const rx = Math.cos(ang) * z.radius * 0.55;
+            const ry = 5 + Math.sin(ang) * z.radius * 0.18;
+            const height = 10 + Math.random() * 14;
+            ctx.strokeStyle = "rgba(255, 90, 20, 0.35)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(rx, ry);
+            ctx.lineTo(rx, ry - height);
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+}
+
 function drawTitleScreen() {
     const img = IMAGES["title_page"];
     if (img && img.complete) {
@@ -840,4 +942,64 @@ function drawTitleScreen() {
     
     ctx.fillText("PRESS ANY KEY", GAME.width / 2, GAME.height - 80);
     ctx.restore();
+}
+
+function drawAmmoHotbar() {
+    const activeTank = GAME.turn === "player" ? player : enemy;
+    const cx = GAME.width / 2;
+    const boxSize = 46;
+    const margin = 10;
+    const totalW = (boxSize * 4) + (margin * 3);
+    const startX = cx - (totalW / 2);
+    const startY = GAME.height - boxSize - 15;
+
+    for (let i = 0; i < 4; i++) {
+        const x = startX + i * (boxSize + margin);
+        const y = startY;
+        const isSelected = activeTank.selectedAmmoSlot === i;
+
+        // Box background
+        ctx.fillStyle = isSelected ? "rgba(255, 213, 79, 0.15)" : "rgba(6, 14, 24, 0.85)";
+        ctx.strokeStyle = isSelected ? "#ffd54f" : "rgba(255, 255, 255, 0.12)";
+        ctx.lineWidth = isSelected ? 2.5 : 1;
+        
+        roundRect(ctx, x, y, boxSize, boxSize, 10, true, true);
+
+        // Selection glow
+        if (isSelected) {
+            ctx.save();
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = "rgba(255, 213, 79, 0.6)";
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Slot Number (Top Left)
+        ctx.fillStyle = isSelected ? "#ffd54f" : "rgba(255, 255, 255, 0.3)";
+        ctx.font = "bold 9px 'Orbitron', sans-serif";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillText(i + 1, x + 6, y + 6);
+
+        // Ammo Label
+        ctx.fillStyle = isSelected ? "#ffffff" : "rgba(255, 255, 255, 0.65)";
+        ctx.font = "bold 10px 'Rajdhani', sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        const ammoName = GAME.ammoTypes[i] || "AMMO";
+        ctx.fillText(ammoName, x + boxSize / 2, y + boxSize - 8);
+
+        // Ammo Icon
+        const iconKey = `ammo_${ammoName.toLowerCase()}`;
+        const iconImg = IMAGES[iconKey];
+        if (iconImg && iconImg.complete) {
+            ctx.drawImage(iconImg, x + 6, y + 6, boxSize - 12, boxSize - 12);
+        } else {
+            // Mini Icon placeholder (Simple circle)
+            ctx.beginPath();
+            ctx.arc(x + boxSize / 2, y + boxSize / 2 - 4, 6, 0, Math.PI * 2);
+            ctx.fillStyle = isSelected ? "#ffd54f" : "#555";
+            ctx.fill();
+        }
+    }
 }

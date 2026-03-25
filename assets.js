@@ -131,6 +131,10 @@ const SOURCES = {
     missile1: "powerups/missile1.png",
     missile2: "powerups/missile2.png",
     title_page: "globalAssets/titlePage.jpg",
+    ammo_standard: "globalAssets/Standard.png",
+    ammo_cluster: "globalAssets/Cluster.png",
+    ammo_oil: "globalAssets/Oil.png",
+    ammo_napalm: "globalAssets/Napalm.png",
 };
 
 function preloadImages(sources, callback) {

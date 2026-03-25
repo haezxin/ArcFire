@@ -21,6 +21,8 @@ class Tank {
         this.effectTurns = 0;
         this.hasHomingMissile = false;
         this.parachuteY = 0; // For parachuting state
+        this.selectedAmmoSlot = 0; // Current ammo selection
+        this.stuckTurns = 0; // Turns remaining for Oil/Stuck effect
     }
 
     get y() {
