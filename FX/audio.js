@@ -20,7 +20,9 @@ const SFX = (() => {
     // Buffer pool per sound (max 4 concurrent instances each)
     const POOL_SIZE = 4;
     const pools = {};
-    const loops = Object.create(null);
+    const loops   = Object.create(null);
+    const fades   = Object.create(null); // active fade interval handles per name
+    const targets = Object.create(null); // target volume per name
 
     // Initialise pools on first interaction (deferred to satisfy autoplay policy)
     let ready = false;
@@ -52,12 +54,12 @@ const SFX = (() => {
         const pool = pools[name];
         if (!pool) { console.warn("SFX: unknown sound:", name); return; }
 
-        // Find a stopped instance to reuse; fall back to the oldest one
+        // Find a stopped instance to reuse;
+        // if all are still playing, spawn a throwaway instance so nothing gets cut off.
         let clip = pool.find(a => a.paused || a.ended);
         if (!clip) {
-            clip = pool[0];
-            clip.pause();
-            clip.currentTime = 0;
+            clip = new Audio(BASE + FILES[name]);
+            clip.preload = "auto";
         }
 
         clip.volume = Math.max(0, Math.min(1, volume));
@@ -65,33 +67,74 @@ const SFX = (() => {
         clip.play().catch(() => {}); // Swallow NotAllowedError safely
     }
 
+    // ── Fade helpers ──────────────────────────────────────────────────────────
+    const FADE_IN_MS  = 600;  // ms to reach full volume
+    const FADE_OUT_MS = 800;  // ms to reach silence
+    const FADE_STEP   = 20;   // interval tick in ms
+
+    function _clearFade(name) {
+        if (fades[name] != null) {
+            clearInterval(fades[name]);
+            fades[name] = null;
+        }
+    }
+
+    function _fadeTo(clip, name, toVol, durationMs, onDone) {
+        _clearFade(name);
+        const fromVol = clip.volume;
+        const steps   = Math.max(1, Math.round(durationMs / FADE_STEP));
+        const delta   = (toVol - fromVol) / steps;
+        let   count   = 0;
+
+        fades[name] = setInterval(() => {
+            count++;
+            clip.volume = Math.max(0, Math.min(1, fromVol + delta * count));
+            if (count >= steps) {
+                _clearFade(name);
+                clip.volume = toVol;
+                if (onDone) onDone();
+            }
+        }, FADE_STEP);
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     function startLoop(name, volume = 1.0) {
-        if (!ready) init(); // ensure pools are initialised and SFX is ready
+        if (!ready) init();
         const file = FILES[name];
         if (!file) { console.warn("SFX: unknown loop sound:", name); return; }
 
         if (!loops[name]) {
             const audio = new Audio(BASE + file);
-            audio.loop = true;
+            audio.loop    = true;
             audio.preload = "auto";
-            loops[name] = audio;
+            loops[name]   = audio;
         }
 
-        const clip = loops[name];
-        clip.volume = Math.max(0, Math.min(1, volume));
+        const clip  = loops[name];
+        const toVol = Math.max(0, Math.min(1, volume));
+        targets[name] = toVol;
 
-        // Avoid audible restarts if already playing.
         if (clip.paused || clip.ended) {
+            // Start silent, then fade in
+            clip.volume      = 0;
             clip.currentTime = 0;
+            clip.play().catch(() => {});
+            _fadeTo(clip, name, toVol, FADE_IN_MS, null);
+        } else {
+            // Already playing – just fade to the new target volume
+            _fadeTo(clip, name, toVol, FADE_IN_MS, null);
         }
-        clip.play().catch(() => {});
     }
 
     function stopLoop(name) {
         const clip = loops[name];
-        if (!clip) return;
-        clip.pause();
-        clip.currentTime = 0;
+        if (!clip || clip.paused) return;
+
+        // Fade out, then pause
+        _fadeTo(clip, name, 0, FADE_OUT_MS, () => {
+            clip.pause();
+            clip.currentTime = 0;
+        });
     }
 
     function warm(name) {
