@@ -10,6 +10,7 @@ const SFX = (() => {
         missile:      "missileFX.mp3",
         shellHit:     "shellHitFX.mp3",
         tankDestroyed:"tankDestroyedFX.mp3",
+        tankLanding:  "tankLandingFX.mp3",
         powerUp:      "powerUpsFX.mp3",
     };
 
@@ -60,5 +61,24 @@ const SFX = (() => {
         clip.play().catch(() => {}); // Swallow NotAllowedError safely
     }
 
-    return { play, init };
+    function warm(name) {
+        if (!ready) init();
+        const pool = pools[name];
+        if (!pool) return;
+        const clip = pool[0];
+        clip.volume = 0.05;
+        clip.currentTime = 0;
+        const promise = clip.play();
+        if (promise && promise.catch) {
+            promise.then(() => {
+                clip.pause();
+                clip.currentTime = 0;
+            }).catch(() => {
+                clip.pause();
+                clip.currentTime = 0;
+            });
+        }
+    }
+
+    return { play, init, warm };
 })();

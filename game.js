@@ -27,8 +27,8 @@ function resetGame() {
     enemy.hitFlash = 0;
     player.alive = true;
     enemy.alive = true;
-    player.state = "idle";
-    enemy.state = "idle";
+    player.state = "parachuting";
+    enemy.state = "parachuting";
     player.animTimer = 0;
     enemy.animTimer = 0;
     player.animFrame = 0;
@@ -39,6 +39,14 @@ function resetGame() {
     enemy.effectTurns = 0;
     player.hasHomingMissile = false;
     enemy.hasHomingMissile = false;
+    player.parachuteY = -100;
+    enemy.parachuteY = -100;
+    player.landed = false;
+    enemy.landed = false;
+    player.landingScheduled = false;
+    enemy.landingScheduled = false;
+    player.landingTimer = 0;
+    enemy.landingTimer = 0;
 
     const levelVal = document.getElementById("levelSelect").value;
     if (levelVal === "random") {
@@ -123,6 +131,52 @@ function update(dt) {
     updateEffects(dt);
     updateEnemyAI(dt);
     updatePowerUps(dt);
+
+    // Update parachuting tanks
+    [player, enemy].forEach(tank => {
+        if (tank.state === "parachuting") {
+            tank.parachuteY += 2 * dt * 60; // Fall at 120 pixels per second
+            tank.parachuteY += GAME.wind * 0.05 * dt * 60; // Barely affected by wind
+            tank.animTimer += dt * 2; // For parachute animation if needed
+
+            const groundY = getTerrainY(tank.x);
+            if (tank.parachuteY + 1 >= groundY) {
+                tank.parachuteY = groundY;
+                tank.state = "idle";
+                tank.landed = true;
+                GAME.screenShake = Math.max(GAME.screenShake, 4); // Strong landing shake
+
+                // Dirt splash effect on impact
+                GAME.effects.push({
+                    type: "dirtSplash",
+                    x: tank.x,
+                    y: groundY,
+                    radius: 30,
+                    timer: 0.45,
+                    max: 0.45,
+                    seed: Math.random(),
+                    soundPlayed: false
+                });
+
+                // Landing sound effect now guaranteed to play on impact
+                if (typeof SFX !== "undefined") {
+                    SFX.play("tankLanding", 1.0);
+                }
+
+                // Kick up a few particles for extra weight feel
+                for (let i = 0; i < 12; i++) {
+                    GAME.debris.push({
+                        x: tank.x + (Math.random() - 0.5) * 22,
+                        y: groundY - 6,
+                        vx: (Math.random() - 0.5) * 2.2,
+                        vy: -Math.random() * 3.2 - 1.1,
+                        size: 2 + Math.random() * 2,
+                        life: 0.4 + Math.random() * 0.35
+                    });
+                }
+            }
+        }
+    });
 
     [player, enemy].forEach(tank => {
         if (tank.alive && tank.y >= GAME.height - 5) {
@@ -252,6 +306,13 @@ function startGame() {
     document.getElementById("gameOverScreen").classList.add("hidden");
     const mBtn = document.getElementById("menuBtn");
     if (mBtn) mBtn.classList.remove("hidden");
+
+    if (typeof SFX !== "undefined") {
+        SFX.init(); // ensure all sound assets are loaded before first impact
+        SFX.warm("tankLanding"); // warm up audio path to avoid first-play lag
+        // extra fallback in case warm needs a tick to stabilize
+        setTimeout(() => SFX.warm("tankLanding"), 120);
+    }
 
     GAME.difficulty = 1;
     GAME.round = 1;

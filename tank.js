@@ -20,9 +20,13 @@ class Tank {
         this.scale = 1.0;
         this.effectTurns = 0;
         this.hasHomingMissile = false;
+        this.parachuteY = 0; // For parachuting state
     }
 
     get y() {
+        if (this.state === "parachuting") {
+            return this.parachuteY;
+        }
         return getTerrainY(this.x);
     }
 

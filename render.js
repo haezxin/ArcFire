@@ -82,14 +82,14 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke) {
 function drawTank(tank) {
     const x = tank.x;
     const y = tank.y;
-    const angle = getTerrainAngle(x);
+    const angle = tank.state === "parachuting" ? 0 : getTerrainAngle(x); // No rotation when parachuting
     const flashAlpha = tank.hitFlash > 0 ? 0.45 : 0;
     const prefix = tank.color === "green" ? "blue" : "red";
     const dir = tank.facing === 1 ? "right" : "left";
 
     ctx.save();
     ctx.imageSmoothingEnabled = false;
-    ctx.translate(x, y + Math.sin(tank.bob) * 0.6);
+    ctx.translate(x, y + (tank.state === "parachuting" ? 0 : Math.sin(tank.bob) * 0.6)); // No bob when parachuting
     ctx.rotate(angle);
     ctx.scale(tank.scale, tank.scale);
 
@@ -98,39 +98,59 @@ function drawTank(tank) {
         state = "exploding";
     }
 
-    let key = `${prefix}_${state}_${dir}`;
-    if (state === "idle") key = `${prefix}_idle_${dir}`;
-    else if (state === "moving") key = `${prefix}_move_${dir}`;
-    else if (state === "firing") key = `${prefix}_fire_${dir}`;
-    else if (state === "exploding") key = `${prefix}_explode_${dir}`;
-    else key = `${prefix}_idle_${dir}`;
-
-    let img = IMAGES[key];
-
-    if (img && img.complete && img.width > 0) {
-        if (state === "idle") {
-            ctx.drawImage(img, -48, -72, 96, 96);
+    if (state === "parachuting") {
+        // Use dedicated parachute tank image, or fallback to composition
+        const parachuteTankKey = tank.color === "green" ? "tankBlueParachute" : "tankRedParachute";
+        const parachuteTankImg = IMAGES[parachuteTankKey];
+        if (parachuteTankImg && parachuteTankImg.complete && parachuteTankImg.width > 0) {
+            ctx.drawImage(parachuteTankImg, -48, -72, 96, 96);
         } else {
-            let cols = Math.floor(img.width / 64) || 1;
-            let rows = Math.floor(img.height / 64) || 1;
-            let totalFrames = cols * rows;
-
-            let frame = tank.animFrame % totalFrames;
-            if (state === "exploding" && tank.animFrame >= totalFrames - 1) {
-                frame = totalFrames - 1;
+            // Draw parachute so bottom touches the tank's top
+            const paraImg = IMAGES["parachute"];
+            if (paraImg && paraImg.complete && paraImg.width > 0) {
+                ctx.drawImage(paraImg, -32, -136, 64, 64);
             }
-            if (state === "firing" && tank.animFrame >= totalFrames - 1) {
-                frame = totalFrames - 1;
+            // Draw tank using same base offsets as normal tank so ground alignment is consistent
+            const tankImg = IMAGES[`${prefix}_idle_${dir}`];
+            if (tankImg && tankImg.complete && tankImg.width > 0) {
+                ctx.drawImage(tankImg, -48, -72, 96, 96);
             }
-
-            let sx = (frame % cols) * 64;
-            let sy = Math.floor(frame / cols) * 64;
-
-            ctx.drawImage(img, sx, sy, 64, 64, -48, -72, 96, 96);
         }
     } else {
-        ctx.fillStyle = tank.color;
-        ctx.fillRect(-36, -30, 72, 30);
+        let key = `${prefix}_${state}_${dir}`;
+        if (state === "idle") key = `${prefix}_idle_${dir}`;
+        else if (state === "moving") key = `${prefix}_move_${dir}`;
+        else if (state === "firing") key = `${prefix}_fire_${dir}`;
+        else if (state === "exploding") key = `${prefix}_explode_${dir}`;
+        else key = `${prefix}_idle_${dir}`;
+
+        let img = IMAGES[key];
+
+        if (img && img.complete && img.width > 0) {
+            if (state === "idle") {
+                ctx.drawImage(img, -48, -72, 96, 96);
+            } else {
+                let cols = Math.floor(img.width / 64) || 1;
+                let rows = Math.floor(img.height / 64) || 1;
+                let totalFrames = cols * rows;
+
+                let frame = tank.animFrame % totalFrames;
+                if (state === "exploding" && tank.animFrame >= totalFrames - 1) {
+                    frame = totalFrames - 1;
+                }
+                if (state === "firing" && tank.animFrame >= totalFrames - 1) {
+                    frame = totalFrames - 1;
+                }
+
+                let sx = (frame % cols) * 64;
+                let sy = Math.floor(frame / cols) * 64;
+
+                ctx.drawImage(img, sx, sy, 64, 64, -48, -72, 96, 96);
+            }
+        } else {
+            ctx.fillStyle = tank.color;
+            ctx.fillRect(-36, -30, 72, 30);
+        }
     }
 
     if (flashAlpha > 0) {
@@ -342,6 +362,32 @@ function drawEffects() {
                     0,
                     Math.PI * 2
                 );
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        if (effect.type === "dirtSplash") {
+            if (!effect.soundPlayed) {
+                effect.soundPlayed = true;
+                if (typeof SFX !== "undefined") {
+                    SFX.play("tankLanding", 1.0);
+                }
+            }
+            const splash = Math.max(0, 1 - effect.timer / effect.max);
+            const radius = effect.radius * splash;
+            ctx.save();
+            ctx.globalAlpha = 0.8 * (1 - splash);
+            ctx.fillStyle = "rgba(120, 92, 46, 0.95)";
+            const particles = 14;
+            for (let i = 0; i < particles; i++) {
+                const angle = (i / particles) * Math.PI * 2 + (effect.seed || 0);
+                const distance = radius * (0.35 + Math.random() * 0.7);
+                const px = effect.x + Math.cos(angle) * distance;
+                const py = effect.y + Math.sin(angle) * distance * 0.4;
+                const pr = 2 + Math.random() * 3;
+                ctx.beginPath();
+                ctx.arc(px, py, pr * (1 - splash), 0, Math.PI * 2);
                 ctx.fill();
             }
             ctx.restore();

@@ -1,4 +1,7 @@
 const SOURCES = {
+    parachute: "globalAssets/parachute.png",
+    tankBlueParachute: "globalAssets/tankBlueParachute.png",
+    tankRedParachute: "globalAssets/tankRedParachute.png",
     blue_idle_left: "bluetank/tank_left.png",
     blue_idle_right: "bluetank/tankblue.png",
     blue_move_left: "bluetank/left_move_blue-Sheet.png",
