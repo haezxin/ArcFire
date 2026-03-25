@@ -165,6 +165,10 @@ function createSkyDecor() {
 }
 
 function getTerrainY(x) {
+    if (!GAME.terrain || GAME.terrain.length === 0) {
+        return GAME.groundBase || 430;
+    }
+
     if (x < 0) return GAME.terrain[0].y + (0 - x) * 5;
     if (x > GAME.width) return GAME.terrain[GAME.terrain.length - 1].y + (x - GAME.width) * 5;
 
@@ -177,6 +181,9 @@ function getTerrainY(x) {
 }
 
 function getTerrainAngle(x) {
+    if (!GAME.terrain || GAME.terrain.length === 0) {
+        return 0;
+    }
     const step = 20;
     const y1 = getTerrainY(x - step);
     const y2 = getTerrainY(x + step);

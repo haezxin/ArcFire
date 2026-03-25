@@ -91,7 +91,7 @@ function resetGame() {
         });
     }
 
-    const windMax = GAME.difficultyMode === "easy" ? 0.03 : (GAME.difficultyMode === "hard" ? 0.10 : 0.06);
+    const windMax = GAME.difficultyMode === "easy" ? 0.045 : (GAME.difficultyMode === "hard" ? 0.16 : 0.09);
     GAME.wind = (Math.random() * 2 - 1) * windMax;
 
     GAME.playerShots = 0;
@@ -261,7 +261,9 @@ function startGame() {
 
     if (!hasSeenTutorial) {
         hasSeenTutorial = true;
-        setTimeout(showTutorialOverlay, 300);
+        // Do not force tutorial overlay; users should see gameplay immediately.
+        // If they want tutorial, they can open from menu or tutorial tab.
+        hideTutorialOverlay();
     }
 }
 
@@ -303,11 +305,29 @@ if (mBtn) mBtn.addEventListener("click", () => {
     else togglePause();
 });
 
-document.getElementById("startBtn").addEventListener("click", startGame);
-document.getElementById("nextLevelBtn").addEventListener("click", loadNextLevel);
-document.getElementById("endMenuBtn").addEventListener("click", quitToMenu);
-document.getElementById("resumeBtn").addEventListener("click", togglePause);
-document.getElementById("pauseMenuBtn").addEventListener("click", () => { GAME.paused = false; quitToMenu(); });
+const startBtn = document.getElementById("startBtn");
+if (startBtn) {
+    startBtn.addEventListener("click", () => {
+        startGame();
+        // Immediately enter gameplay if tutorial overlay is auto-shown
+        if (!hasSeenTutorial) {
+            hasSeenTutorial = true;
+            hideTutorialOverlay();
+        }
+    });
+}
+
+const nextLevelBtn = document.getElementById("nextLevelBtn");
+if (nextLevelBtn) nextLevelBtn.addEventListener("click", loadNextLevel);
+
+const endMenuBtn = document.getElementById("endMenuBtn");
+if (endMenuBtn) endMenuBtn.addEventListener("click", quitToMenu);
+
+const resumeBtn = document.getElementById("resumeBtn");
+if (resumeBtn) resumeBtn.addEventListener("click", togglePause);
+
+const pauseMenuBtn = document.getElementById("pauseMenuBtn");
+if (pauseMenuBtn) pauseMenuBtn.addEventListener("click", () => { GAME.paused = false; quitToMenu(); });
 
 document.querySelectorAll(".menu-tab").forEach(tab => {
     tab.addEventListener("click", () => {

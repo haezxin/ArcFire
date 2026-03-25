@@ -179,13 +179,29 @@ function drawProjectile() {
     if (!p) return;
 
     ctx.save();
-    for (const t of p.trail) {
-        ctx.globalAlpha = t.life * 0.65;
-        ctx.fillStyle = "#ffffff";
+
+    if (p.trail.length > 1) {
         ctx.beginPath();
-        ctx.arc(t.x, t.y, 3.2 * t.life, 0, Math.PI * 2);
+        for (let i = 0; i < p.trail.length; i++) {
+            const t = p.trail[i];
+            const alpha = (t.life * 0.7) * (i / p.trail.length);
+            if (i === 0) ctx.moveTo(t.x, t.y);
+            else ctx.lineTo(t.x, t.y);
+        }
+        ctx.strokeStyle = "rgba(234,239,255,0.85)";
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.55;
+        ctx.stroke();
+    }
+
+    for (const t of p.trail) {
+        ctx.globalAlpha = t.life * 0.7;
+        ctx.fillStyle = "rgba(248,248,255,0.97)";
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, 4.0 * t.life, 0, Math.PI * 2);
         ctx.fill();
     }
+
     ctx.restore();
 
     ctx.save();
@@ -572,25 +588,51 @@ function drawWindOverlay() {
 
     // Draw animated wind streaks across the canvas
     ctx.save();
-    const numStreaks = Math.ceil(Math.abs(ws) * 120);
-    const speed = ws * 600;
+    const strength = Math.min(1, Math.abs(ws) * 12);
+    const numStreaks = Math.ceil(18 + Math.abs(ws) * 170);
     const t = (Date.now() / 1000) % 1;
 
     for (let i = 0; i < numStreaks; i++) {
-        const seed = (i * 137.508) % 1;
-        const y = seed * GAME.height * 0.75;
-        const len = 30 + seed * 60;
-        const ox = ((seed + t * Math.sign(ws)) % 1) * GAME.width;
-        const alpha = 0.06 + seed * 0.08;
+        const seed = (i * 0.6180339887) % 1;
+        const y = 40 + seed * (GAME.height - 90);
+        const len = 40 + seed * (80 + Math.abs(ws) * 40);
+        const ox = ((seed + t * Math.sign(ws)) % 1) * (GAME.width + len) - len * 0.5;
+        const alpha = 0.08 + seed * 0.22 * strength;
 
         ctx.globalAlpha = alpha;
-        ctx.strokeStyle = "#c8e8ff";
-        ctx.lineWidth = 0.8 + seed * 1.2;
+        ctx.strokeStyle = `rgba(190,220,255,${0.5 + strength * 0.4})`;
+        ctx.lineWidth = 1 + seed * 2;
         ctx.beginPath();
         ctx.moveTo(ox, y);
-        ctx.lineTo(ox + (ws > 0 ? len : -len), y + (seed - 0.5) * 8);
+        ctx.lineTo(ox + (ws > 0 ? len : -len), y + (seed - 0.5) * 10);
         ctx.stroke();
     }
+
+    // Big wind direction arrow at top center for strong wind
+    if (Math.abs(ws) > 0.02) {
+        const arrowSize = Math.min(120, 60 + Math.abs(ws) * 330);
+        const centerX = GAME.width / 2;
+        const centerY = 34;
+        const dir = ws > 0 ? 1 : -1;
+
+        ctx.beginPath();
+        ctx.moveTo(centerX - dir * arrowSize * 0.45, centerY);
+        ctx.lineTo(centerX + dir * arrowSize * 0.45, centerY);
+        ctx.strokeStyle = `rgba(255,255,255,${0.75 + strength * 0.25})`;
+        ctx.lineWidth = 5;
+        ctx.stroke();
+
+        ctx.fillStyle = `rgba(255,255,255,${0.8 + strength * 0.2})`;
+        ctx.beginPath();
+        const head = arrowSize * 0.11;
+        const bx = centerX + dir * arrowSize * 0.45;
+        ctx.moveTo(bx, centerY);
+        ctx.lineTo(bx - dir * head, centerY - head * 0.8);
+        ctx.lineTo(bx - dir * head, centerY + head * 0.8);
+        ctx.closePath();
+        ctx.fill();
+    }
+
     ctx.restore();
 }
 

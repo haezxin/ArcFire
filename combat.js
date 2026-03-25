@@ -127,13 +127,15 @@ function updateProjectile(dt) {
 
     const p = GAME.projectile;
 
-    p.trail.push({ x: p.x, y: p.y, life: 0.5 });
-    if (p.trail.length > 18) p.trail.shift();
+    // Make projectiles leave a stronger visual trail
+    p.trail.push({ x: p.x, y: p.y, life: 0.65 });
+    if (p.trail.length > 24) p.trail.shift();
 
+    // Apply enhanced wind influence to make effects more visible in flight
     p.x += p.vx;
     p.y += p.vy;
     p.vy += GAME.gravity;
-    p.vx += GAME.wind;
+    p.vx += GAME.wind * 1.15;
 
     if (p.homing) {
         const target = p.shooter === player ? enemy : player;
@@ -367,8 +369,8 @@ function endTurn() {
     GAME.turn = GAME.turn === "player" ? "enemy" : "player";
 
     // ── Dynamic Wind Fluctuation ──
-    const windMax = GAME.difficultyMode === "easy" ? 0.03 : (GAME.difficultyMode === "hard" ? 0.12 : 0.06);
-    GAME.wind += (Math.random() * 2 - 1) * (windMax * 0.6); // dynamically shifts
+    const windMax = GAME.difficultyMode === "easy" ? 0.045 : (GAME.difficultyMode === "hard" ? 0.16 : 0.09);
+    GAME.wind += (Math.random() * 2 - 1) * (windMax * 0.65); // dynamically shifts
     GAME.wind = Math.max(-windMax, Math.min(windMax, GAME.wind));
 
     [player, enemy].forEach(tank => {
