@@ -130,6 +130,7 @@ const SOURCES = {
     size_power_up: "powerups/targetSize.png",
     missile1: "powerups/missile1.png",
     missile2: "powerups/missile2.png",
+    title_page: "globalAssets/titlePage.jpg",
 };
 
 function preloadImages(sources, callback) {

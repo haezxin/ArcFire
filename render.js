@@ -497,6 +497,7 @@ function updateEffects(dt) {
 
     GAME.flashTimer = Math.max(0, GAME.flashTimer - dt);
     GAME.screenShake = Math.max(0, GAME.screenShake - dt * 20);
+    GAME.titleTimer += dt;
 }
 
 function drawCraters() {
@@ -813,4 +814,30 @@ function drawPowerUps() {
         ctx.restore();
 
     });
+}
+
+function drawTitleScreen() {
+    const img = IMAGES["title_page"];
+    if (img && img.complete) {
+        ctx.drawImage(img, 0, 0, GAME.width, GAME.height);
+    } else {
+        // Fallback or loading color
+        ctx.fillStyle = "#060e18";
+        ctx.fillRect(0, 0, GAME.width, GAME.height);
+    }
+
+    // "Press Any Key" text
+    const alpha = 0.5 + Math.sin(GAME.titleTimer * 4) * 0.5;
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 28px 'Orbitron', sans-serif";
+    
+    // Ghostly glow
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = `rgba(255, 213, 79, ${alpha * 0.5})`;
+    ctx.fillStyle = `rgba(255, 213, 79, ${alpha})`;
+    
+    ctx.fillText("PRESS ANY KEY", GAME.width / 2, GAME.height - 80);
+    ctx.restore();
 }

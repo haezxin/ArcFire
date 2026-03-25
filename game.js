@@ -143,7 +143,7 @@ function updateHUD() {
 }
 
 function update(dt) {
-    if (GAME.state === "intro") return;
+    if (GAME.state === "title" || GAME.state === "intro") return;
     if (GAME.paused) return;
 
     if (GAME.showHint) {
@@ -245,7 +245,9 @@ function render() {
     drawTank(player);
     drawTank(enemy);
 
-    if (GAME.state !== "intro") {
+    if (GAME.state === "title") {
+        drawTitleScreen();
+    } else if (GAME.state !== "intro") {
         drawAimGuide();
         drawPowerUps();
         drawProjectile();
@@ -278,6 +280,10 @@ function gameLoop(timestamp) {
 }
 
 document.addEventListener("keydown", e => {
+    if (GAME.state === "title") {
+        showIntro();
+        return;
+    }
     const key = e.key.toLowerCase();
     keys[key] = true;
 
@@ -317,6 +323,16 @@ function togglePause() {
     } else {
         ps.classList.add("hidden");
     }
+}
+
+function showTitleScreen() {
+    document.getElementById("introScreen").classList.add("hidden");
+    document.getElementById("pauseScreen").classList.add("hidden");
+    document.getElementById("gameOverScreen").classList.add("hidden");
+    const mBtn = document.getElementById("menuBtn");
+    if (mBtn) mBtn.classList.add("hidden");
+    GAME.state = "title";
+    GAME.paused = false;
 }
 
 function showIntro() {
@@ -522,6 +538,6 @@ document.querySelectorAll(".menu-tab").forEach(tab => {
 
 // ── BOOT ──
 preloadImages(SOURCES, () => {
-    showIntro();
+    showTitleScreen();
     requestAnimationFrame(gameLoop);
 });
