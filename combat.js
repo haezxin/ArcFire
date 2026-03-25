@@ -258,6 +258,23 @@ function applyDamage(tank, amount) {
         // Determine winner tank (the opposite of the one that died)
         const winnerTank = (tank === player) ? enemy : player;
         GAME.winner = winnerTank.name || (winnerTank === player ? "Player" : "Enemy");
+
+        if (GAME.mode === 'endless' && tank === enemy) {
+            // Endless Mode: Just score and respawn
+            GAME.playerScore += 100;
+            GAME.killedEnemies++;
+            GAME.winner = null; // No winner yet
+            GAME.state = "respawning"; // prevent endTurn from passing turn to dead enemy
+            
+            setTimeout(() => {
+                respawnEnemy();
+                GAME.state = "aiming"; // Return to aiming state after explosion
+                GAME.turn = "player";  // Give player another turn after a kill
+            }, 2000);
+            
+            return; // Don't proceed to game over
+        }
+
         GAME.state = "gameover";
 
         // Update scores
@@ -386,7 +403,7 @@ function explode(x, y, radius, directTank) {
 }
 
 function endTurn() {
-    if (GAME.winner) return;
+    if (GAME.winner || GAME.state === "respawning") return;
 
     GAME.state = "aiming";
     GAME.turn = GAME.turn === "player" ? "enemy" : "player";
@@ -436,6 +453,9 @@ function updatePlayerInput(dt) {
 
     // In single player only the `player` turn is human; in multiplayer both turns are human
     if (GAME.mode !== 'multiplayer' && GAME.turn !== 'player') return;
+
+    // Block controls if any tank is parachuting to avoid animation skips and floating issues
+    if (player.state === "parachuting" || enemy.state === "parachuting") return;
 
     const moveSpeed = 86;
     let moved = false;

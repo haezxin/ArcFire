@@ -41,6 +41,7 @@ const GAME = {
     craters: [],                // Dynamic crater images on terrain
     level: 1,                   // Current stage layout
     theme: "bright",            // "bright" | "pale"
+    killedEnemies: 0,           // Number of enemies killed in Endless mode
 };
 
 const keys = Object.create(null);

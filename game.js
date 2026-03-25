@@ -113,6 +113,28 @@ function resetGame() {
     updateHUD();
 }
 
+function respawnEnemy() {
+    enemy.alive = true;
+    enemy.hp = enemy.maxHp;
+    enemy.state = "parachuting";
+    enemy.parachuteY = -120;
+    enemy.landed = false;
+    enemy.landingScheduled = false;
+    enemy.landingTimer = 0;
+    enemy.animFrame = 0;
+    enemy.animTimer = 0;
+    enemy.x = 700 + Math.random() * 350; // Spawn on the right half
+    enemy.angle = -145;
+    enemy.power = 50;
+    enemy.scale = 1.0;
+    enemy.effectTurns = 0;
+
+    // Play respawn sound if exists
+    if (typeof SFX !== "undefined") {
+        SFX.play("tankLanding", 0.5);
+    }
+}
+
 function updateHUD() {
     // HUD is now handled by drawCanvasHUD in the render loop.
 }
@@ -317,16 +339,28 @@ function startGame() {
     const activeBtn = document.querySelector(".diff-btn.active");
     GAME.difficultyMode = activeBtn ? activeBtn.dataset.diff : "normal";
 
-    // Read selected game mode: '1' = Multiplayer, '2' = Single Player
+    // Read selected game mode: '1' = Multiplayer, '2' = Single Player, '3' = Endless
     const modeEl = document.getElementById('modeSelect');
     const modeVal = modeEl ? modeEl.value : '2';
-    GAME.mode = (modeVal === '1') ? 'multiplayer' : 'single';
-    GAME.useAI = (GAME.mode === 'single');
+
+    if (modeVal === '1') {
+        GAME.mode = 'multiplayer';
+        GAME.useAI = false;
+    } else if (modeVal === '3') {
+        GAME.mode = 'endless';
+        GAME.useAI = true;
+    } else {
+        GAME.mode = 'single';
+        GAME.useAI = true;
+    }
 
     // Update tank names for multiplayer mode
     if (GAME.mode === 'multiplayer') {
         player.name = 'Player 1';
         enemy.name = 'Player 2';
+    } else if (GAME.mode === 'endless') {
+        player.name = 'Player';
+        enemy.name = 'Enemy Wave';
     } else {
         player.name = 'Player';
         enemy.name = 'Enemy';
@@ -351,6 +385,7 @@ function startGame() {
     GAME.round = 1;
     GAME.playerScore = 0;
     GAME.enemyScore = 0;
+    GAME.killedEnemies = 0;
     resetGame();
 
     // If terrain hasn't been created yet (user skipped tutorial confirmation), create it now

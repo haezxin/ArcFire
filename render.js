@@ -103,17 +103,17 @@ function drawTank(tank) {
         const parachuteTankKey = tank.color === "green" ? "tankBlueParachute" : "tankRedParachute";
         const parachuteTankImg = IMAGES[parachuteTankKey];
         if (parachuteTankImg && parachuteTankImg.complete && parachuteTankImg.width > 0) {
-            ctx.drawImage(parachuteTankImg, -48, -72, 96, 96);
+            ctx.drawImage(parachuteTankImg, -48, -71, 96, 96);
         } else {
             // Draw parachute so bottom touches the tank's top
             const paraImg = IMAGES["parachute"];
             if (paraImg && paraImg.complete && paraImg.width > 0) {
-                ctx.drawImage(paraImg, -32, -136, 64, 64);
+                ctx.drawImage(paraImg, -32, -135, 64, 64);
             }
             // Draw tank using same base offsets as normal tank so ground alignment is consistent
             const tankImg = IMAGES[`${prefix}_idle_${dir}`];
             if (tankImg && tankImg.complete && tankImg.width > 0) {
-                ctx.drawImage(tankImg, -48, -72, 96, 96);
+                ctx.drawImage(tankImg, -48, -71, 96, 96);
             }
         }
     } else {
@@ -128,7 +128,7 @@ function drawTank(tank) {
 
         if (img && img.complete && img.width > 0) {
             if (state === "idle") {
-                ctx.drawImage(img, -48, -72, 96, 96);
+                ctx.drawImage(img, -48, -71, 96, 96);
             } else {
                 let cols = Math.floor(img.width / 64) || 1;
                 let rows = Math.floor(img.height / 64) || 1;
@@ -145,7 +145,7 @@ function drawTank(tank) {
                 let sx = (frame % cols) * 64;
                 let sy = Math.floor(frame / cols) * 64;
 
-                ctx.drawImage(img, sx, sy, 64, 64, -48, -72, 96, 96);
+                ctx.drawImage(img, sx, sy, 64, 64, -48, -71, 96, 96);
             }
         } else {
             ctx.fillStyle = tank.color;
@@ -551,12 +551,20 @@ function drawCenterStats() {
     ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillText(`ROUND ${GAME.round}`, cx, py + 7);
+    if (GAME.mode === 'endless') {
+        ctx.fillText(`KILLS: ${GAME.killedEnemies}`, cx, py + 7);
+    } else {
+        ctx.fillText(`ROUND ${GAME.round}`, cx, py + 7);
+    }
 
     // Row 2 – Score
     ctx.font = "bold 24px 'Orbitron', sans-serif";
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(`${GAME.playerScore}  —  ${GAME.enemyScore}`, cx, py + 20);
+    if (GAME.mode === 'endless') {
+        ctx.fillText(`SCORE: ${GAME.playerScore}`, cx, py + 20);
+    } else {
+        ctx.fillText(`${GAME.playerScore}  —  ${GAME.enemyScore}`, cx, py + 20);
+    }
 
     // Row 3 – Turn indicator
     const isPlayer = GAME.turn === "player";

@@ -32,7 +32,7 @@ class Tank {
 
     muzzlePoint() {
         const angle = getTerrainAngle(this.x);
-        const turretOffY = -38;
+        const turretOffY = -37;
         const turretOffX = 0;
 
         const cosA = Math.cos(angle);
