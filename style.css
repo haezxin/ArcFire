@@ -371,7 +371,6 @@ canvas {
     display: block;
     border-radius: 0;
     background: linear-gradient(180deg, var(--bg1), var(--bg2));
-    image-rendering: pixelated;
 }
 
 /* ── OVERLAYS ─────────────────────────────────────────── */
@@ -390,7 +389,7 @@ canvas {
     padding: 24px;
     text-align: center;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 .intro-screen.hidden {
@@ -438,11 +437,40 @@ canvas {
 .tab-content {
     display: none;
     width: 100%;
+    flex: 1;
+    overflow: hidden;
     animation: fadeIn 0.4s ease-out;
 }
 
 .tab-content.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
+}
+
+#tab-customize.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    height: 100%;
+}
+
+.customize-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    width: 100%;
+    height: 100%;
+    max-width: 900px;
+    box-sizing: border-box;
+    padding: 10px;
+}
+
+.tutorial-content {
+    overflow-y: auto;
+    max-height: 80vh;
 }
 
 @keyframes fadeIn {
@@ -1166,7 +1194,7 @@ canvas {
     color: var(--accent);
     font-style: normal;
 }
-/* ── SHOP UI ─────────────────────────────────────────── */
+/* -- SHOP UI ------------------------------------------- */
 .shop-inner {
     max-width: 900px;
     background: rgba(10, 18, 28, 0.98);
@@ -1278,7 +1306,7 @@ canvas {
     padding-top: 24px;
 }
 
-/* ── MUNITIONS INDICATORS ─────────────────────────────── */
+/* -- MUNITIONS INDICATORS ------------------------------- */
 .ammo-status { font-size: 11px; color: var(--muted); margin-top: 4px; }
 .ammo-unlocked { color: var(--success); font-weight: 700; }
 .ammo-locked { color: var(--danger); font-weight: 700; }
@@ -1286,4 +1314,114 @@ canvas {
 @media (max-width: 850px) {
     .shop-grid { grid-template-columns: 1fr; gap: 24px; }
     .shop-inner { padding: 24px; }
+}
+
+/* -- CUSTOMIZATION ------------------------------------- */
+.customize-content { max-width: 1000px; width: 100%; }
+
+.preview-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+}
+
+#customPreview {
+    width: 320px !important;
+    height: 160px !important;
+    display: block;
+    border-radius: 12px;
+    border: 1px solid var(--panel-border);
+    background: rgba(0,0,0,0.25);
+    image-rendering: auto;
+}
+
+
+
+
+.custom-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.custom-controls {
+    display: flex;
+    flex-direction: row;
+    gap: 40px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+@media (max-width: 850px) {
+    .custom-controls { flex-direction: column; gap: 20px; }
+}
+
+.part-selectors {
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cust-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.part-row {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.part-label {
+    font-family: var(--font-title);
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--muted);
+}
+
+.selector-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.val-label {
+    min-width: 100px;
+    text-align: center;
+    font-family: var(--font-title);
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 1px;
+}
+
+.arrow-btn.small {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+}
+
+.cust-hint {
+    margin-top: 10px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+@media (max-width: 800px) {
+    .custom-layout { flex-direction: column; align-items: stretch; }
+    .custom-options { grid-template-columns: 1fr; }
 }

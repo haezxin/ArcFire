@@ -178,6 +178,7 @@
             <div id="introScreen" class="intro-screen">
                 <div class="intro-nav">
                     <button class="menu-tab active" data-tab="play">PLAY</button>
+                    <button class="menu-tab" data-tab="customize">CUSTOMIZE</button>
                     <button class="menu-tab" data-tab="tutorial">TUTORIAL</button>
                 </div>
 
@@ -285,6 +286,52 @@
                         </div>
 
                         <button id="startBtn" class="primary-btn">Engage Combat</button>
+                    </div>
+                </div>
+
+                <!-- CUSTOMIZE TAB -->
+                <div id="tab-customize" class="tab-content">
+                    <div class="intro-content customize-content">
+                        <h2 style="font-size: 24px; letter-spacing: 4px;">TANK ASSEMBLY</h2>
+                        <div class="custom-layout">
+                            <div class="preview-area">
+                                <canvas id="customPreview" width="640" height="320"></canvas>
+                                <p class="cust-hint" style="margin-top: 10px; font-size: 10px; letter-spacing: 2px;">LIVE PREVIEW</p>
+                            </div>
+
+                            <div class="custom-controls">
+                                <div class="part-selectors">
+                                    <div class="part-row">
+                                        <span class="part-label">TURRET</span>
+                                        <div class="selector-controls">
+                                            <button class="arrow-btn small" onclick="cyclePart('turret', -1)">&#10094;</button>
+                                            <span id="turretName" class="val-label">SLIM</span>
+                                            <button class="arrow-btn small" onclick="cyclePart('turret', 1)">&#10095;</button>
+                                        </div>
+                                    </div>
+                                    <div class="part-row">
+                                        <span class="part-label">BODY</span>
+                                        <div class="selector-controls">
+                                            <button class="arrow-btn small" onclick="cyclePart('body', -1)">&#10094;</button>
+                                            <span id="bodyName" class="val-label">GREEN</span>
+                                            <button class="arrow-btn small" onclick="cyclePart('body', 1)">&#10095;</button>
+                                        </div>
+                                    </div>
+                                    <div class="part-row">
+                                        <span class="part-label">TRACKS</span>
+                                        <div class="selector-controls">
+                                            <button class="arrow-btn small" onclick="cyclePart('tracks', -1)">&#10094;</button>
+                                            <span id="tracksName" class="val-label">STANDARD</span>
+                                            <button class="arrow-btn small" onclick="cyclePart('tracks', 1)">&#10095;</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="cust-actions">
+                                    <button class="primary-btn" style="font-size: 16px; padding: 12px 34px;" onclick="document.querySelector('[data-tab=\'play\']').click()">Confirm Assembly</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

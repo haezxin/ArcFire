@@ -28,6 +28,32 @@ class Tank {
         // [Standard, Cluster, Oil, Napalm]
         // Standard is infinite; others are limited.
         this.ammoCounts = [Infinity, 3, 4, 4];
+
+        // ── Customization (Modular Assembly)
+        this.isCustom = true;
+        this.customParts = {
+            body: this.color === "green" ? "body_green_1" : "body_red_1",
+            turret: "turret_1",
+            tracks: "tracks_1"
+        };
+        
+        if (name === "Enemy") {
+            this.randomizeParts();
+        }
+    }
+
+    randomizeParts() {
+        if (typeof GAME === "undefined" || !GAME.customParts) return;
+        const cp = GAME.customParts;
+        const randBody = cp.bodies[Math.floor(Math.random() * cp.bodies.length)].key;
+        const randTurret = cp.turrets[Math.floor(Math.random() * cp.turrets.length)].key;
+        const randTracks = cp.tracks[Math.floor(Math.random() * cp.tracks.length)].key;
+        
+        this.customParts = {
+            body: randBody,
+            turret: randTurret,
+            tracks: randTracks
+        };
     }
 
     get y() {

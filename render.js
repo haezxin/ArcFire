@@ -14,6 +14,8 @@ function drawBackground() {
         const grad = ctx.createLinearGradient(0, 0, 0, GAME.height);
         grad.addColorStop(0, "#2c3b4a");
         grad.addColorStop(1, "#12181f");
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, GAME.width, GAME.height);
     }
@@ -82,14 +84,14 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke) {
 function drawTank(tank) {
     const x = tank.x;
     const y = tank.y;
-    const angle = tank.state === "parachuting" ? 0 : getTerrainAngle(x); // No rotation when parachuting
+    const angle = tank.state === "parachuting" ? 0 : getTerrainAngle(x); 
     const flashAlpha = tank.hitFlash > 0 ? 0.45 : 0;
     const prefix = tank.color === "green" ? "blue" : "red";
     const dir = tank.facing === 1 ? "right" : "left";
 
     ctx.save();
     ctx.imageSmoothingEnabled = false;
-    ctx.translate(x, y + (tank.state === "parachuting" ? 0 : Math.sin(tank.bob) * 0.6)); // No bob when parachuting
+    ctx.translate(x, y + (tank.state === "parachuting" ? 0 : Math.sin(tank.bob) * 0.6)); 
     ctx.rotate(angle);
     ctx.scale(tank.scale, tank.scale);
 
@@ -99,57 +101,70 @@ function drawTank(tank) {
     }
 
     if (state === "parachuting") {
-        // Use dedicated parachute tank image, or fallback to composition
         const parachuteTankKey = tank.color === "green" ? "tankBlueParachute" : "tankRedParachute";
         const parachuteTankImg = IMAGES[parachuteTankKey];
         if (parachuteTankImg && parachuteTankImg.complete && parachuteTankImg.width > 0) {
             ctx.drawImage(parachuteTankImg, -48, -71, 96, 96);
         } else {
-            // Draw parachute so bottom touches the tank's top
             const paraImg = IMAGES["parachute"];
-            if (paraImg && paraImg.complete && paraImg.width > 0) {
-                ctx.drawImage(paraImg, -32, -135, 64, 64);
-            }
-            // Draw tank using same base offsets as normal tank so ground alignment is consistent
+            if (paraImg && paraImg.complete && paraImg.width > 0) ctx.drawImage(paraImg, -32, -135, 64, 64);
             const tankImg = IMAGES[`${prefix}_idle_${dir}`];
-            if (tankImg && tankImg.complete && tankImg.width > 0) {
-                ctx.drawImage(tankImg, -48, -71, 96, 96);
-            }
+            if (tankImg && tankImg.complete && tankImg.width > 0) ctx.drawImage(tankImg, -48, -71, 96, 96);
         }
     } else {
-        let key = `${prefix}_${state}_${dir}`;
-        if (state === "idle") key = `${prefix}_idle_${dir}`;
-        else if (state === "moving") key = `${prefix}_move_${dir}`;
-        else if (state === "firing") key = `${prefix}_fire_${dir}`;
-        else if (state === "exploding") key = `${prefix}_explode_${dir}`;
-        else key = `${prefix}_idle_${dir}`;
+        if (tank.isCustom) {
+            // 1. Tracks (Bottom)
+            const parts = tank.customParts;
+            const tracksImg = IMAGES[parts.tracks];
+            if (tracksImg && tracksImg.complete) {
+                ctx.drawImage(tracksImg, -tracksImg.width / 2, -tracksImg.height / 2 - 5);
+            }
 
-        let img = IMAGES[key];
+            // 2. Turret (Behind Body)
+            const turretImg = IMAGES[parts.turret];
+            if (turretImg && turretImg.complete) {
+                ctx.save();
+                // Left side in middle: offset X by 0
+                // Vertically fine-tuned to -23
+                ctx.translate(0, -23);
+                const aimAngle = (tank.angle - angle * 180 / Math.PI) * Math.PI / 180;
+                ctx.rotate(aimAngle);
+                ctx.drawImage(turretImg, 0, -turretImg.height / 2);
+                ctx.restore();
+            }
 
-        if (img && img.complete && img.width > 0) {
-            if (state === "idle") {
-                ctx.drawImage(img, -48, -71, 96, 96);
-            } else {
-                let cols = Math.floor(img.width / 64) || 1;
-                let rows = Math.floor(img.height / 64) || 1;
-                let totalFrames = cols * rows;
-
-                let frame = tank.animFrame % totalFrames;
-                if (state === "exploding" && tank.animFrame >= totalFrames - 1) {
-                    frame = totalFrames - 1;
-                }
-                if (state === "firing" && tank.animFrame >= totalFrames - 1) {
-                    frame = totalFrames - 1;
-                }
-
-                let sx = (frame % cols) * 64;
-                let sy = Math.floor(frame / cols) * 64;
-
-                ctx.drawImage(img, sx, sy, 64, 64, -48, -71, 96, 96);
+            // 3. Hull/Body (Top Layer)
+            const bodyImg = IMAGES[parts.body];
+            if (bodyImg && bodyImg.complete) {
+                // Sits overlap-forward at -14
+                ctx.drawImage(bodyImg, -bodyImg.width / 2, -bodyImg.height / 2 - 14);
             }
         } else {
-            ctx.fillStyle = tank.color;
-            ctx.fillRect(-36, -30, 72, 30);
+            let key = `${prefix}_${state}_${dir}`;
+            if (state === "idle") key = `${prefix}_idle_${dir}`;
+            else if (state === "moving") key = `${prefix}_move_${dir}`;
+            else if (state === "firing") key = `${prefix}_fire_${dir}`;
+            else if (state === "exploding") key = `${prefix}_explode_${dir}`;
+            else key = `${prefix}_idle_${dir}`;
+            let img = IMAGES[key];
+            if (img && img.complete && img.width > 0) {
+                if (state === "idle") {
+                    ctx.drawImage(img, -48, -71, 96, 96);
+                } else {
+                    let cols = Math.floor(img.width / 64) || 1;
+                    let rows = Math.floor(img.height / 64) || 1;
+                    let totalFrames = cols * rows;
+                    let frame = tank.animFrame % totalFrames;
+                    if (state === "exploding" && tank.animFrame >= totalFrames - 1) frame = totalFrames - 1;
+                    if (state === "firing" && tank.animFrame >= totalFrames - 1) frame = totalFrames - 1;
+                    let sx = (frame % cols) * 64;
+                    let sy = Math.floor(frame / cols) * 64;
+                    ctx.drawImage(img, sx, sy, 64, 64, -48, -71, 96, 96);
+                }
+            } else {
+                ctx.fillStyle = tank.color;
+                ctx.fillRect(-36, -30, 72, 30);
+            }
         }
     }
 
@@ -158,23 +173,19 @@ function drawTank(tank) {
         ctx.fillStyle = `rgba(255,255,255,${flashAlpha})`;
         ctx.fillRect(-80, -80, 160, 160);
     }
-
     ctx.restore();
 
-    // Stuck Indicator (Oil drips/puddle)
     if (tank.stuckTurns > 0) {
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(angle);
         ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-        // Dark puddle under tank
         ctx.beginPath();
         ctx.ellipse(0, 5, 45 * tank.scale, 10 * tank.scale, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
     }
 
-    // Napalm burn indicator (flames around the tank)
     if (GAME.burnZones && GAME.burnZones.length > 0) {
         const isBurning = GAME.burnZones.some(z => z.turnsLeft > 0 && Math.abs(tank.x - z.x) <= z.radius);
         if (isBurning) {
@@ -182,8 +193,6 @@ function drawTank(tank) {
             ctx.translate(x, y);
             ctx.rotate(angle);
             ctx.globalCompositeOperation = "lighter";
-
-            // Orange-red glow under the hull.
             ctx.globalAlpha = 0.55;
             const glow = ctx.createRadialGradient(0, 5, 4, 0, 5, 55 * tank.scale);
             glow.addColorStop(0, "rgba(255, 200, 80, 0.55)");
@@ -193,23 +202,6 @@ function drawTank(tank) {
             ctx.beginPath();
             ctx.ellipse(0, 8, 48 * tank.scale, 14 * tank.scale, 0, 0, Math.PI * 2);
             ctx.fill();
-
-            // Flame tips.
-            ctx.globalAlpha = 0.85;
-            for (let i = 0; i < 9; i++) {
-                const t = i / 9;
-                const ang = -Math.PI / 2 + (t - 0.5) * 1.6;
-                const rx = Math.cos(ang) * (18 * tank.scale);
-                const ry = 6 + Math.sin(ang) * (10 * tank.scale);
-                const height = 16 * tank.scale + (Math.sin(GAME.titleTimer * 8 + i * 0.9) * 6 * tank.scale);
-                ctx.strokeStyle = "rgba(255, 90, 20, 0.55)";
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(rx, ry);
-                ctx.lineTo(rx, ry - height);
-                ctx.stroke();
-            }
-
             ctx.restore();
         }
     }

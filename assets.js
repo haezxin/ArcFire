@@ -135,6 +135,72 @@ const SOURCES = {
     ammo_cluster: "globalAssets/Cluster.png",
     ammo_oil: "globalAssets/Oil.png",
     ammo_napalm: "globalAssets/Napalm.png",
+
+    // ── Customizable Tank Parts (PNG/Default size)
+    // BODIES
+    body_green_1: "PNG/Default size/tanks_tankGreen_body1.png",
+    body_green_2: "PNG/Default size/tanks_tankGreen_body2.png",
+    body_green_3: "PNG/Default size/tanks_tankGreen_body3.png",
+    body_green_4: "PNG/Default size/tanks_tankGreen_body4.png",
+    body_green_5: "PNG/Default size/tanks_tankGreen_body5.png",
+
+    body_red_1: "PNG/Default size/tanks_tankDesert_body1.png",
+    body_red_2: "PNG/Default size/tanks_tankDesert_body2.png",
+    body_red_3: "PNG/Default size/tanks_tankDesert_body3.png",
+    body_red_4: "PNG/Default size/tanks_tankDesert_body4.png",
+    body_red_5: "PNG/Default size/tanks_tankDesert_body5.png",
+
+    body_grey_1: "PNG/Default size/tanks_tankGrey_body1.png",
+    body_grey_2: "PNG/Default size/tanks_tankGrey_body2.png",
+    body_grey_3: "PNG/Default size/tanks_tankGrey_body3.png",
+    body_grey_4: "PNG/Default size/tanks_tankGrey_body4.png",
+    body_grey_5: "PNG/Default size/tanks_tankGrey_body5.png",
+
+    body_navy_1: "PNG/Default size/tanks_tankNavy_body1.png",
+    body_navy_2: "PNG/Default size/tanks_tankNavy_body2.png",
+    body_navy_3: "PNG/Default size/tanks_tankNavy_body3.png",
+    body_navy_4: "PNG/Default size/tanks_tankNavy_body4.png",
+    body_navy_5: "PNG/Default size/tanks_tankNavy_body5.png",
+    
+    // TURRETS
+    turret_1: "PNG/Default size/tanks_turret1.png",
+    turret_2: "PNG/Default size/tanks_turret2.png",
+    turret_3: "PNG/Default size/tanks_turret3.png",
+    turret_4: "PNG/Default size/tanks_turret4.png",
+
+    // TRACKS
+    tracks_1: "PNG/Default size/tanks_tankTracks1.png",
+    tracks_2: "PNG/Default size/tanks_tankTracks2.png",
+    tracks_3: "PNG/Default size/tanks_tankTracks3.png",
+    tracks_4: "PNG/Default size/tanks_tankTracks4.png",
+    tracks_5: "PNG/Default size/tanks_tankTracks5.png",
+    tracks_6: "PNG/Default size/tanks_tankTracks6.png",
+    tracks_7: "PNG/Default size/tanks_tankTracks7.png",
+
+    // ── Full Pre-assembled Tanks
+    tank_desert_1: "PNG/Default size/tanks_tankDesert1.png",
+    tank_desert_2: "PNG/Default size/tanks_tankDesert2.png",
+    tank_desert_3: "PNG/Default size/tanks_tankDesert3.png",
+    tank_desert_4: "PNG/Default size/tanks_tankDesert4.png",
+    tank_desert_5: "PNG/Default size/tanks_tankDesert5.png",
+
+    tank_green_1: "PNG/Default size/tanks_tankGreen1.png",
+    tank_green_2: "PNG/Default size/tanks_tankGreen2.png",
+    tank_green_3: "PNG/Default size/tanks_tankGreen3.png",
+    tank_green_4: "PNG/Default size/tanks_tankGreen4.png",
+    tank_green_5: "PNG/Default size/tanks_tankGreen5.png",
+
+    tank_grey_1: "PNG/Default size/tanks_tankGrey1.png",
+    tank_grey_2: "PNG/Default size/tanks_tankGrey2.png",
+    tank_grey_3: "PNG/Default size/tanks_tankGrey3.png",
+    tank_grey_4: "PNG/Default size/tanks_tankGrey4.png",
+    tank_grey_5: "PNG/Default size/tanks_tankGrey5.png",
+
+    tank_navy_1: "PNG/Default size/tanks_tankNavy1.png",
+    tank_navy_2: "PNG/Default size/tanks_tankNavy2.png",
+    tank_navy_3: "PNG/Default size/tanks_tankNavy3.png",
+    tank_navy_4: "PNG/Default size/tanks_tankNavy4.png",
+    tank_navy_5: "PNG/Default size/tanks_tankNavy5.png",
 };
 
 function preloadImages(sources, callback) {

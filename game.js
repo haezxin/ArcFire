@@ -143,6 +143,7 @@ function respawnEnemy() {
     enemy.landingTimer = 0;
     enemy.animFrame = 0;
     enemy.animTimer = 0;
+    enemy.randomizeParts(); // Modular randomization on rebirth!
     enemy.x = 700 + Math.random() * 350; // Spawn on the right half
     enemy.angle = -145;
     enemy.power = 50;
@@ -309,7 +310,7 @@ document.addEventListener("keydown", e => {
 
     // Ammo selection (1-4 keys)
     const activeTank = GAME.turn === "player" ? player : enemy;
-    
+
     // Prevent switching ammo if stuck? 
     // Usually only movement is restricted. I'll allow ammo switching.
 
@@ -349,6 +350,24 @@ document.addEventListener("keyup", e => {
     keys[e.key.toLowerCase()] = false;
 });
 
+function hideAllScreens() {
+    const screens = ["introScreen", "pauseScreen", "gameOverScreen", "shopScreen", "tutorialOverlay"];
+    screens.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.add("hidden");
+            el.classList.remove("active");
+        }
+    });
+}
+
+function quitToMenu() {
+    GAME.state = "title";
+    GAME.paused = false;
+    showTitleScreen();
+    if (typeof SFX !== "undefined") SFX.stopLoop("napalmBurn");
+}
+
 function togglePause() {
     if (GAME.winner) return;
     GAME.paused = !GAME.paused;
@@ -361,12 +380,15 @@ function togglePause() {
 }
 
 function showTitleScreen() {
-    document.getElementById("introScreen").classList.add("hidden");
+    GAME.state = "title";
+    hideAllScreens();
+    document.getElementById("introScreen").classList.add("active");
+    // Initialize customization (null type for full refresh)
+    cyclePart(null, 0);
     document.getElementById("pauseScreen").classList.add("hidden");
     document.getElementById("gameOverScreen").classList.add("hidden");
     const mBtn = document.getElementById("menuBtn");
     if (mBtn) mBtn.classList.add("hidden");
-    GAME.state = "title";
     GAME.paused = false;
 }
 
@@ -567,6 +589,7 @@ document.querySelectorAll(".menu-tab").forEach(tab => {
             content.classList.remove("active");
             if (content.id === `tab-${targetTab}`) content.classList.add("active");
         });
+        if (targetTab === "customize") cyclePart(null, 0);
         GAME.screenShake = 2;
     });
 });
@@ -586,7 +609,7 @@ function closeShop() {
 
 function updateShopUI() {
     document.getElementById("shopCreditsDisplay").textContent = GAME.credits;
-    
+
     // Update Upgrade buttons
     const armorLvl = GAME.playerUpgrades.armor;
     const armorPrice = GAME.upgradePrices.armor[armorLvl];
@@ -615,7 +638,7 @@ function updateShopUI() {
     // Populate Ammo Shop
     const ammoContainer = document.getElementById("ammoShopList");
     ammoContainer.innerHTML = "";
-    
+
     for (let i = 1; i < GAME.ammoTypes.length; i++) {
         const name = GAME.ammoTypes[i];
         const unlocked = GAME.ammoUnlocked[i];
@@ -625,7 +648,7 @@ function updateShopUI() {
 
         const item = document.createElement("div");
         item.className = "ammo-shop-item";
-        
+
         let actionBtnHtml = "";
         if (!unlocked) {
             actionBtnHtml = `
@@ -657,7 +680,7 @@ function updateShopUI() {
 function buyUpgrade(type) {
     const lvl = GAME.playerUpgrades[type];
     const price = GAME.upgradePrices[type][lvl];
-    
+
     if (GAME.credits >= price && lvl < 5) {
         GAME.credits -= price;
         GAME.playerUpgrades[type]++;
@@ -668,7 +691,7 @@ function buyUpgrade(type) {
 
 function buyAmmo(idx, isRefill) {
     const price = isRefill ? GAME.ammoPrices.refill[idx] : GAME.ammoPrices.unlock[idx];
-    
+
     if (GAME.credits >= price) {
         GAME.credits -= price;
         if (isRefill) {
@@ -679,6 +702,104 @@ function buyAmmo(idx, isRefill) {
         if (typeof SFX !== "undefined") SFX.play("powerUp");
         updateShopUI();
     }
+}
+
+// ── CUSTOMIZATION LOGIC ──────────────────────────────────────────────────
+
+function cyclePart(type, dir) {
+    if (type) {
+        // Find how many items are in this category 
+        const categoryMap = { turret: "turrets", body: "bodies", tracks: "tracks" };
+        const category = categoryMap[type];
+        const list = GAME.customParts[category];
+
+        // Cycle index
+        GAME.customParts.indices[type] = (GAME.customParts.indices[type] + dir + list.length) % list.length;
+
+        // Update selection UI text
+        const nameEl = document.getElementById(type + "Name");
+        if (nameEl) nameEl.textContent = list[GAME.customParts.indices[type]].name;
+    } else {
+        // Initial call - refresh all text
+        ["turret", "body", "tracks"].forEach(t => {
+            const cat = t === "turret" ? "turrets" : (t === "body" ? "bodies" : "tracks");
+            const list = GAME.customParts[cat];
+            const nameEl = document.getElementById(t + "Name");
+            if (nameEl) nameEl.textContent = list[GAME.customParts.indices[t]].name;
+        });
+    }
+
+    // Apply parts to player
+    player.customParts = {
+        turret: GAME.customParts.turrets[GAME.customParts.indices.turret].key,
+        body: GAME.customParts.bodies[GAME.customParts.indices.body].key,
+        tracks: GAME.customParts.tracks[GAME.customParts.indices.tracks].key
+    };
+    player.isCustom = true;
+
+    updateCustomPreview();
+    if (typeof SFX !== "undefined" && dir !== 0) SFX.play("tankLanding", 0.4);
+}
+
+function updateCustomPreview() {
+    const canvas = document.getElementById("customPreview");
+    if (!canvas) return;
+    const pctx = canvas.getContext("2d");
+
+    const W = canvas.width;   // 640
+    const H = canvas.height;  // 320
+
+    pctx.clearRect(0, 0, W, H);
+
+    const parts = player.customParts;
+    const tracksImg = IMAGES[parts.tracks];
+    const turretImg = IMAGES[parts.turret];
+    const bodyImg = IMAGES[parts.body];
+
+    if (!tracksImg && !turretImg && !bodyImg) {
+        pctx.fillStyle = "rgba(255,255,255,0.15)";
+        pctx.font = "bold 26px 'Orbitron', sans-serif";
+        pctx.textAlign = "center";
+        pctx.textBaseline = "middle";
+        pctx.fillText("LOADING…", W / 2, H / 2);
+        return;
+    }
+
+    const cx = W / 2;
+    const cy = H / 2 + 10;
+    const SCALE = 3.5;   // Increased to maximize vertical presence without cropping
+
+    pctx.save();
+    pctx.imageSmoothingEnabled = true;
+    pctx.imageSmoothingQuality = "high";
+    pctx.translate(cx, cy);
+    pctx.scale(SCALE, SCALE);
+
+    // 1. Tracks (Rendered lowest, pushed down physically so they aren't hidden behind body)
+    if (tracksImg && tracksImg.complete && tracksImg.naturalWidth > 0) {
+        pctx.drawImage(tracksImg, -tracksImg.naturalWidth / 2, -tracksImg.naturalHeight / 2 + 18);
+    }
+
+    // 2. Turret (Rendered behind the body)
+    if (turretImg && turretImg.complete && turretImg.naturalWidth > 0) {
+        pctx.drawImage(turretImg, 0, -turretImg.naturalHeight / 2 - 16);
+    }
+
+    // 3. Body (Rendered on top of everything)
+    if (bodyImg && bodyImg.complete && bodyImg.naturalWidth > 0) {
+        pctx.drawImage(bodyImg, -bodyImg.naturalWidth / 2, -bodyImg.naturalHeight / 2 - 6);
+    }
+
+    pctx.restore();
+
+    // Floor shadow highlight
+    pctx.save();
+    pctx.globalAlpha = 0.18;
+    pctx.fillStyle = "#000";
+    pctx.beginPath();
+    pctx.ellipse(cx, cy + 170, 65, 13, 0, 0, Math.PI * 2);
+    pctx.fill();
+    pctx.restore();
 }
 
 // ── BOOT ──
