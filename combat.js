@@ -1,4 +1,4 @@
-function spawnProjectile(tank, isHoming = false, type = "Standard") {
+function spawnProjectile(tank, isHoming = false, type = "Standard", fireTrail = false) {
     const angle = tank.angle * Math.PI / 180;
     const power = tank.power * 0.165;
     const muzzle = tank.muzzlePoint();
@@ -15,7 +15,8 @@ function spawnProjectile(tank, isHoming = false, type = "Standard") {
         animTimer: 0,
         shooter: tank,
         type: type,
-        isSplit: false
+        isSplit: false,
+        fireTrail: fireTrail
     };
 
     GAME.projectiles.push(p);
@@ -53,6 +54,9 @@ function fireCurrentTank() {
     // Safety: never allow firing while parachuting.
     if (tank.state === "parachuting") return;
 
+    GAME.shotHitThisTurn = false;
+    const fireTrail = (tank === player ? GAME.playerConsecutiveHits : GAME.enemyConsecutiveHits) >= 2;
+
     const ammoIndex = tank.selectedAmmoSlot;
     const ammoName = GAME.ammoTypes[ammoIndex];
 
@@ -61,7 +65,7 @@ function fireCurrentTank() {
     if (remaining !== Infinity && remaining <= 0) return;
     if (remaining !== Infinity) tank.ammoCounts[ammoIndex] = remaining - 1;
     
-    spawnProjectile(tank, false, ammoName);
+    spawnProjectile(tank, false, ammoName, fireTrail);
 }
 
 function solveBallisticEstimate(dxAbs, dy, launchDegrees, gravity) {
@@ -391,7 +395,7 @@ function handleProjectileImpact(p, index, terrainY, collider) {
 
         if (hitTank) {
             // "Little damage" on direct hit; the burn does the rest.
-            applyDamage(hitTank, 12);
+            applyDamage(hitTank, 12, p);
         }
 
         GAME.projectiles.splice(index, 1);
@@ -401,7 +405,7 @@ function handleProjectileImpact(p, index, terrainY, collider) {
         const radius = p.type === "Submunition" ? 28 : 42;
         const damageMult = p.type === "Submunition" ? 0.6 : 1.0;
         
-        explode(p.x, p.y, radius, (collider instanceof Tank ? collider : null), damageMult);
+        explode(p.x, p.y, radius, (collider instanceof Tank ? collider : null), damageMult, p);
         GAME.projectiles.splice(index, 1);
         
         if (GAME.projectiles.length === 0) endTurn();
@@ -441,22 +445,40 @@ function checkObstacleHit(projectile) {
     return null;
 }
 
-function applyDamage(tank, amount) {
+function applyDamage(tank, amount, sourceProjectile = null) {
     if (!tank.alive) return;
 
     tank.hp = clamp(tank.hp - amount, 0, tank.maxHp);
     tank.hitFlash = 0.18;
 
-    // Track damage dealt
-    if (GAME.projectile) {
-        if (GAME.projectile.shooter === player && tank === enemy) {
-            GAME.playerHits++;
-            GAME.playerConsecutiveHits++;
+    // Track damage dealt and mark a successful shot once per turn.
+    if (sourceProjectile) {
+        if (sourceProjectile.shooter === player && tank === enemy) {
             GAME.playerDamageDealt += amount;
-        } else if (GAME.projectile.shooter === enemy && tank === player) {
-            GAME.enemyHits++;
-            GAME.enemyConsecutiveHits++;
+            if (!GAME.shotHitThisTurn) {
+                GAME.playerHits++;
+                GAME.playerConsecutiveHits++;
+                GAME.shotHitThisTurn = true;
+                GAME.comboPopup = {
+                    text: GAME.playerConsecutiveHits >= 3 ? `ARCFIRE ${GAME.playerConsecutiveHits}X!` : `${GAME.playerConsecutiveHits}X COMBO!`,
+                    color: GAME.playerConsecutiveHits >= 3 ? "#ffb443" : "#8ad6ff",
+                    scale: 1.0,
+                    timer: 1.6
+                };
+            }
+        } else if (sourceProjectile.shooter === enemy && tank === player) {
             GAME.enemyDamageDealt += amount;
+            if (!GAME.shotHitThisTurn) {
+                GAME.enemyHits++;
+                GAME.enemyConsecutiveHits++;
+                GAME.shotHitThisTurn = true;
+                GAME.comboPopup = {
+                    text: GAME.enemyConsecutiveHits >= 3 ? `ARCFIRE ${GAME.enemyConsecutiveHits}X!` : `${GAME.enemyConsecutiveHits}X COMBO!`,
+                    color: GAME.enemyConsecutiveHits >= 3 ? "#ffb443" : "#8ad6ff",
+                    scale: 1.0,
+                    timer: 1.6
+                };
+            }
         }
     }
 
@@ -548,7 +570,7 @@ function applyDamage(tank, amount) {
     }
 }
 
-function explode(x, y, radius, directTank, damageMult = 1.0) {
+function explode(x, y, radius, directTank, damageMult = 1.0, sourceProjectile = null) {
     carveTerrain(x, y, Math.max(radius, 42));
     GAME.screenShake = Math.max(GAME.screenShake, 8 * damageMult);
 
@@ -628,7 +650,7 @@ function explode(x, y, radius, directTank, damageMult = 1.0) {
         }
     });
 
-    if (directTank) applyDamage(directTank, 8 * damageMult);
+    if (directTank) applyDamage(directTank, 8 * damageMult, sourceProjectile);
 }
 
 function endTurn() {
@@ -639,10 +661,31 @@ function endTurn() {
 
     // Reset consecutive hits for the player who just finished their turn (they missed)
     if (GAME.turn === "player") {
-        GAME.playerConsecutiveHits = 0;
+        if (!GAME.shotHitThisTurn) {
+            if (GAME.playerConsecutiveHits > 1) {
+                GAME.comboPopup = {
+                    text: "COMBO BROKEN",
+                    color: "#d9d9d9",
+                    scale: 1.0,
+                    timer: 1.1
+                };
+            }
+            GAME.playerConsecutiveHits = 0;
+        }
     } else {
-        GAME.enemyConsecutiveHits = 0;
+        if (!GAME.shotHitThisTurn) {
+            if (GAME.enemyConsecutiveHits > 1) {
+                GAME.comboPopup = {
+                    text: "COMBO BROKEN",
+                    color: "#d9d9d9",
+                    scale: 1.0,
+                    timer: 1.1
+                };
+            }
+            GAME.enemyConsecutiveHits = 0;
+        }
     }
+    GAME.shotHitThisTurn = false;
 
     GAME.state = "aiming";
     GAME.turn = GAME.turn === "player" ? "enemy" : "player";
@@ -807,12 +850,7 @@ function updateEnemyAI(dt) {
         if (enemy.stuckTurns > 0) {
             enemy.state = "idle";
             GAME.state = "thinking";
-            setTimeout(() => {
-                if (!GAME.winner) {
-                    GAME.state = "aiming";
-                    applyAIShot();
-                }
-            }, 600);
+            scheduleAIShot(600);
             return;
         }
 
@@ -846,12 +884,20 @@ function updateEnemyAI(dt) {
             enemy.state = "idle";
             enemy.x = enemy.targetX;
             GAME.state = "thinking";
-            setTimeout(() => {
-                if (!GAME.winner) {
-                    GAME.state = "aiming";
-                    applyAIShot();
-                }
-            }, 600);
+            scheduleAIShot(600);
         }
     }
+}
+
+function scheduleAIShot(delay = 600) {
+    setTimeout(() => {
+        if (!GAME.winner && GAME.turn === "enemy") {
+            if (GAME.projectiles.length === 0) {
+                GAME.state = "aiming";
+                applyAIShot();
+            } else {
+                scheduleAIShot(120);
+            }
+        }
+    }, delay);
 }

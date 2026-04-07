@@ -41,11 +41,13 @@ const GAME = {
     enemyHits: 0,
     enemyDamageDealt: 0,
     enemyConsecutiveHits: 0,
+    shotHitThisTurn: false,
     showHint: true,
     hintTimer: 6,               // seconds to show first-turn hint
     playerPowerUp: null,        // "size" | "missile" | null
     craters: [],                // Dynamic crater images on terrain
     burnZones: [],             // Napalm burn areas (tick by turns)
+    comboPopup: null,
     level: 1,                   // Current stage layout
     theme: "bright",            // "bright" | "pale"
     killedEnemies: 0,           // Number of enemies killed in Endless mode

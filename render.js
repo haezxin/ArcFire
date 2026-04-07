@@ -265,17 +265,17 @@ function drawProjectile() {
                 if (i === 0) ctx.moveTo(t.x, t.y);
                 else ctx.lineTo(t.x, t.y);
             }
-            ctx.strokeStyle = "rgba(234,239,255,0.85)";
-            ctx.lineWidth = 2;
-            ctx.globalAlpha = 0.55;
+            ctx.strokeStyle = p.fireTrail ? "rgba(255,150,40,0.92)" : "rgba(234,239,255,0.85)";
+            ctx.lineWidth = p.fireTrail ? 3 : 2;
+            ctx.globalAlpha = p.fireTrail ? 0.75 : 0.55;
             ctx.stroke();
         }
 
         for (const t of p.trail) {
             ctx.globalAlpha = t.life * 0.7;
-            ctx.fillStyle = "rgba(248,248,255,0.97)";
+            ctx.fillStyle = p.fireTrail ? "rgba(255,180,60,0.96)" : "rgba(248,248,255,0.97)";
             ctx.beginPath();
-            ctx.arc(t.x, t.y, 4.0 * t.life, 0, Math.PI * 2);
+            ctx.arc(t.x, t.y, p.fireTrail ? 5.2 * t.life : 4.0 * t.life, 0, Math.PI * 2);
             ctx.fill();
         }
 
@@ -283,6 +283,20 @@ function drawProjectile() {
 
         ctx.save();
         ctx.translate(p.x, p.y);
+        if (p.fireTrail) {
+            ctx.save();
+            ctx.globalCompositeOperation = "lighter";
+            ctx.globalAlpha = 0.28;
+            const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, 18);
+            glow.addColorStop(0, "rgba(255,220,130,0.9)");
+            glow.addColorStop(0.4, "rgba(255,140,55,0.55)");
+            glow.addColorStop(1, "rgba(255,110,30,0)");
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(0, 0, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
         const angle = Math.atan2(p.vy, p.vx);
         ctx.rotate(angle);
 
@@ -526,6 +540,12 @@ function updateEffects(dt) {
 
     GAME.debris = GAME.debris.filter(d => d.life > 0 && d.y < GAME.height + 30);
 
+    if (GAME.comboPopup) {
+        GAME.comboPopup.timer -= dt;
+        GAME.comboPopup.scale += dt * 0.35;
+        if (GAME.comboPopup.timer <= 0) GAME.comboPopup = null;
+    }
+
     [player, enemy].forEach(tank => {
         tank.hitFlash = Math.max(0, tank.hitFlash - dt);
 
@@ -607,10 +627,34 @@ function drawCanvasHUD() {
     drawAmmoHotbar();
 }
 
+function drawComboBanner() {
+    if (!GAME.comboPopup || GAME.comboPopup.timer <= 0) return;
+
+    const banner = GAME.comboPopup;
+    const alpha = Math.min(1, banner.timer / 1.1);
+    const size = 34 + Math.round(banner.scale * 5);
+
+    ctx.save();
+    ctx.translate(GAME.width / 2, GAME.height * 0.2);
+    ctx.rotate(Math.sin(banner.scale * 4.2) * 0.05);
+    ctx.globalAlpha = alpha;
+    ctx.font = `bold ${size}px 'Orbitron', sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillStyle = banner.color;
+    ctx.shadowColor = "rgba(0,0,0,0.35)";
+    ctx.shadowBlur = 18;
+    ctx.fillText(banner.text, 0, 0);
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(255,255,255,0.18)";
+    ctx.lineWidth = 3;
+    ctx.strokeText(banner.text, 0, 0);
+    ctx.restore();
+}
+
 function drawCenterStats() {
     const cx = GAME.width / 2;
     const panelW = 320;
-    const panelH = 72;
+    const panelH = 94;
     const px = cx - panelW / 2;
     const py = 10;
 
@@ -647,10 +691,21 @@ function drawCenterStats() {
     // Row 3 – Turn indicator
     const isPlayer = GAME.turn === "player";
     const turnName = (isPlayer ? player.name : enemy.name) || (isPlayer ? "PLAYER" : "ENEMY");
+    const currentShots = isPlayer ? GAME.playerShots : GAME.enemyShots;
+    const currentHits = isPlayer ? GAME.playerHits : GAME.enemyHits;
+    const currentConsecutive = isPlayer ? GAME.playerConsecutiveHits : GAME.enemyConsecutiveHits;
+
     ctx.font = "bold 10px 'Orbitron', sans-serif";
     ctx.fillStyle = isPlayer ? "#71e07a" : "#ff6b6b";
     const turnText = isPlayer ? `▶  ${turnName.toUpperCase()} TURN` : `${turnName.toUpperCase()} TURN  ◀`;
     ctx.fillText(turnText, cx, py + 50);
+
+    if (currentConsecutive > 0) {
+        const comboLabel = currentConsecutive >= 3 ? `ARCFIRE ${currentConsecutive}X` : `${currentConsecutive}X COMBO`;
+        ctx.font = "bold 14px 'Orbitron', sans-serif";
+        ctx.fillStyle = currentConsecutive >= 3 ? "#ffd16a" : "#9cd5ff";
+        ctx.fillText(comboLabel, cx, py + 72);
+    }
 
     // Wind block – left side
     const ws = GAME.wind;
@@ -665,10 +720,6 @@ function drawCenterStats() {
     ctx.fillText(wDir + " " + windText, px + 14, py + 32);
 
     // Stats block – right side
-    const currentShots = isPlayer ? GAME.playerShots : GAME.enemyShots;
-    const currentHits = isPlayer ? GAME.playerHits : GAME.enemyHits;
-    const currentConsecutive = isPlayer ? GAME.playerConsecutiveHits : GAME.enemyConsecutiveHits;
-
     ctx.textAlign = "right";
     ctx.font = "bold 9px 'Orbitron', sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.38)";
@@ -676,13 +727,6 @@ function drawCenterStats() {
     ctx.font = "600 14px 'Rajdhani', sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.85)";
     ctx.fillText(`${currentShots} / ${currentHits}`, px + panelW - 14, py + 32);
-    
-    // Consecutive hits indicator
-    if (currentConsecutive > 0) {
-        ctx.font = "bold 8px 'Orbitron', sans-serif";
-        ctx.fillStyle = currentConsecutive >= 3 ? "rgba(255, 200, 0, 0.9)" : "rgba(200, 200, 255, 0.7)";
-        ctx.fillText(`${currentConsecutive}x COMBO`, px + panelW - 14, py + 46);
-    }
 }
 
 function drawBar(x, y, w, h, percent, color, label, angle, power) {

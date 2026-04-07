@@ -11,6 +11,7 @@ function resetGame() {
     GAME.powerUps = [];
     GAME.craters = [];
     GAME.burnZones = [];
+    GAME.comboPopup = null;
 
     // Ensure any looping napalm audio is silenced on reset.
     if (typeof SFX !== "undefined") SFX.stopLoop("napalmBurn");
@@ -120,6 +121,7 @@ function resetGame() {
     GAME.enemyHits = 0;
     GAME.enemyDamageDealt = 0;
     GAME.enemyConsecutiveHits = 0;
+    GAME.shotHitThisTurn = false;
     GAME.playerPowerUp = null;
     GAME.paused = false;
     GAME.showHint = true;
@@ -268,6 +270,7 @@ function render() {
         drawWindOverlay();
         drawHint();
         drawCanvasHUD();
+        drawComboBanner();
     }
 
     ctx.restore();
