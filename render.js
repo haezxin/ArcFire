@@ -667,6 +667,7 @@ function drawCenterStats() {
     // Stats block – right side
     const currentShots = isPlayer ? GAME.playerShots : GAME.enemyShots;
     const currentHits = isPlayer ? GAME.playerHits : GAME.enemyHits;
+    const currentConsecutive = isPlayer ? GAME.playerConsecutiveHits : GAME.enemyConsecutiveHits;
 
     ctx.textAlign = "right";
     ctx.font = "bold 9px 'Orbitron', sans-serif";
@@ -675,6 +676,13 @@ function drawCenterStats() {
     ctx.font = "600 14px 'Rajdhani', sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.85)";
     ctx.fillText(`${currentShots} / ${currentHits}`, px + panelW - 14, py + 32);
+    
+    // Consecutive hits indicator
+    if (currentConsecutive > 0) {
+        ctx.font = "bold 8px 'Orbitron', sans-serif";
+        ctx.fillStyle = currentConsecutive >= 3 ? "rgba(255, 200, 0, 0.9)" : "rgba(200, 200, 255, 0.7)";
+        ctx.fillText(`${currentConsecutive}x COMBO`, px + panelW - 14, py + 46);
+    }
 }
 
 function drawBar(x, y, w, h, percent, color, label, angle, power) {

@@ -451,9 +451,11 @@ function applyDamage(tank, amount) {
     if (GAME.projectile) {
         if (GAME.projectile.shooter === player && tank === enemy) {
             GAME.playerHits++;
+            GAME.playerConsecutiveHits++;
             GAME.playerDamageDealt += amount;
         } else if (GAME.projectile.shooter === enemy && tank === player) {
             GAME.enemyHits++;
+            GAME.enemyConsecutiveHits++;
             GAME.enemyDamageDealt += amount;
         }
     }
@@ -634,6 +636,13 @@ function endTurn() {
 
     // The tank whose turn we are ending (status ticks should happen when the tank acts).
     const actorTank = GAME.turn === "player" ? player : enemy;
+
+    // Reset consecutive hits for the player who just finished their turn (they missed)
+    if (GAME.turn === "player") {
+        GAME.playerConsecutiveHits = 0;
+    } else {
+        GAME.enemyConsecutiveHits = 0;
+    }
 
     GAME.state = "aiming";
     GAME.turn = GAME.turn === "player" ? "enemy" : "player";

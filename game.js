@@ -115,9 +115,11 @@ function resetGame() {
     GAME.playerShots = 0;
     GAME.playerHits = 0;
     GAME.playerDamageDealt = 0;
+    GAME.playerConsecutiveHits = 0;
     GAME.enemyShots = 0;
     GAME.enemyHits = 0;
     GAME.enemyDamageDealt = 0;
+    GAME.enemyConsecutiveHits = 0;
     GAME.playerPowerUp = null;
     GAME.paused = false;
     GAME.showHint = true;

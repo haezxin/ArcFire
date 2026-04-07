@@ -36,6 +36,11 @@ const GAME = {
     playerShots: 0,
     playerHits: 0,
     playerDamageDealt: 0,
+    playerConsecutiveHits: 0,
+    enemyShots: 0,
+    enemyHits: 0,
+    enemyDamageDealt: 0,
+    enemyConsecutiveHits: 0,
     showHint: true,
     hintTimer: 6,               // seconds to show first-turn hint
     playerPowerUp: null,        // "size" | "missile" | null
