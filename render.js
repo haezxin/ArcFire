@@ -1053,11 +1053,11 @@ function drawTitleScreen() {
 function drawAmmoHotbar() {
     const activeTank = GAME.turn === "player" ? player : enemy;
     const cx = GAME.width / 2;
-    const boxSize = 46;
-    const margin = 10;
+    const boxSize = 56;
+    const margin = 8;
     const totalW = (boxSize * 4) + (margin * 3);
     const startX = cx - (totalW / 2);
-    const startY = GAME.height - boxSize - 15;
+    const startY = GAME.height - boxSize - 18;
 
     for (let i = 0; i < 4; i++) {
         const x = startX + i * (boxSize + margin);
@@ -1085,38 +1085,37 @@ function drawAmmoHotbar() {
         ctx.font = "bold 9px 'Orbitron', sans-serif";
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
-        ctx.fillText(i + 1, x + 6, y + 6);
+        ctx.fillText(i + 1, x + 6, y + 4);
 
-        // Ammo Label
-        const remaining = activeTank.ammoCounts ? activeTank.ammoCounts[i] : Infinity;
-        const isEmpty = remaining !== Infinity && remaining <= 0;
-
-        ctx.fillStyle = isEmpty ? "rgba(255,255,255,0.25)" : (isSelected ? "#ffffff" : "rgba(255, 255, 255, 0.65)");
-        ctx.font = "bold 10px 'Rajdhani', sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "bottom";
-        const ammoName = GAME.ammoTypes[i] || "AMMO";
-        ctx.fillText(ammoName, x + boxSize / 2, y + boxSize - 8);
-
-        // Ammo remaining badge (Standard shows infinity)
-        ctx.font = "bold 12px 'Orbitron', sans-serif";
+        // Ammo remaining badge (Standard shows infinity) – Top Right
+        ctx.font = "bold 11px 'Orbitron', sans-serif";
         ctx.textAlign = "right";
         ctx.textBaseline = "top";
+        const remaining = activeTank.ammoCounts ? activeTank.ammoCounts[i] : Infinity;
+        const isEmpty = remaining !== Infinity && remaining <= 0;
         ctx.fillStyle = isEmpty ? "rgba(255, 100, 100, 0.8)" : "rgba(255, 255, 255, 0.75)";
         const badge = remaining === Infinity ? "∞" : remaining.toString();
-        ctx.fillText(badge, x + boxSize - 6, y + 4);
+        ctx.fillText(badge, x + boxSize - 5, y + 4);
 
-        // Ammo Icon
-        const iconKey = `ammo_${ammoName.toLowerCase()}`;
+        // Ammo Icon (Center, larger)
+        const iconKey = `ammo_${GAME.ammoTypes[i].toLowerCase()}`;
         const iconImg = IMAGES[iconKey];
         if (iconImg && iconImg.complete) {
-            ctx.drawImage(iconImg, x + 6, y + 6, boxSize - 12, boxSize - 12);
+            ctx.drawImage(iconImg, x + 8, y + 8, boxSize - 16, boxSize - 26);
         } else {
-            // Mini Icon placeholder (Simple circle)
+            // Fallback circle
             ctx.beginPath();
-            ctx.arc(x + boxSize / 2, y + boxSize / 2 - 4, 6, 0, Math.PI * 2);
+            ctx.arc(x + boxSize / 2, y + 18, 6, 0, Math.PI * 2);
             ctx.fillStyle = isSelected ? "#ffd54f" : "#555";
             ctx.fill();
         }
+
+        // Ammo Label (Bottom, larger and clearer)
+        ctx.fillStyle = isEmpty ? "rgba(255,200,200,0.9)" : (isSelected ? "#ffffff" : "rgba(255, 255, 255, 0.8)");
+        ctx.font = "bold 10px 'Rajdhani', sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        const ammoName = GAME.ammoTypes[i];
+        ctx.fillText(ammoName, x + boxSize / 2, y + boxSize - 2);
     }
 }

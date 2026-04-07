@@ -1,6 +1,9 @@
 const canvas = document.getElementById("game");
+
+// Keep internal resolution fixed for game logic
 canvas.width = 1200; // Fixed high-res width
 canvas.height = 600; // Fixed high-res height
+
 const ctx = canvas.getContext("2d");
 
 const GAME = {
