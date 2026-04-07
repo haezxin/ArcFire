@@ -1097,11 +1097,14 @@ function drawAmmoHotbar() {
         const badge = remaining === Infinity ? "∞" : remaining.toString();
         ctx.fillText(badge, x + boxSize - 5, y + 4);
 
-        // Ammo Icon (Center, larger)
+        // Ammo Icon (Center, square and properly scaled)
         const iconKey = `ammo_${GAME.ammoTypes[i].toLowerCase()}`;
         const iconImg = IMAGES[iconKey];
         if (iconImg && iconImg.complete) {
-            ctx.drawImage(iconImg, x + 8, y + 8, boxSize - 16, boxSize - 26);
+            ctx.imageSmoothingEnabled = true;
+            const iconSize = 32;
+            ctx.drawImage(iconImg, x + (boxSize - iconSize) / 2, y + 12, iconSize, iconSize);
+            ctx.imageSmoothingEnabled = false;
         } else {
             // Fallback circle
             ctx.beginPath();

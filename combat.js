@@ -79,6 +79,39 @@ function applyAIShot() {
     if (!GAME.useAI) return;
     if (GAME.turn !== "enemy" || GAME.state !== "aiming" || GAME.winner) return;
 
+    // AI chooses ammo based on difficulty and situation
+    let chosenIdx = 0; // Standard
+    const r = Math.random();
+
+    if (GAME.difficultyMode === "easy") {
+        // Easy mostly uses Standard, rarely tries anything else
+        if (r < 0.15) chosenIdx = Math.floor(Math.random() * GAME.ammoTypes.length);
+    } else if (GAME.difficultyMode === "normal") {
+        // Normal uses all types but still favors Standard
+        if (r < 0.45) {
+            chosenIdx = Math.floor(Math.random() * GAME.ammoTypes.length);
+        } else {
+            chosenIdx = 0; // 55% Standard
+        }
+    } else if (GAME.difficultyMode === "hard") {
+        // Hard AI selects strategically
+        if (player.stuckTurns === 0 && r < 0.40) {
+            chosenIdx = 2; // Priority: Oil if player not stuck
+        } else if (player.hp < 35 && r < 0.60) {
+            chosenIdx = 1; // Priority: Cluster for finishing when player HP low
+        } else if (r < 0.50) {
+            chosenIdx = 3; // Priority: Napalm for burn
+        } else {
+            chosenIdx = 1; // Then Cluster
+        }
+    }
+
+    // Verify ammo count
+    if (enemy.ammoCounts && enemy.ammoCounts[chosenIdx] <= 0) {
+        chosenIdx = 0; // Fallback to infinite Standard
+    }
+    enemy.selectedAmmoSlot = chosenIdx;
+
     const dx = player.x - enemy.x;
     const dy = (player.y - 24) - (enemy.y - 24);
 
@@ -355,6 +388,34 @@ function handleProjectileImpact(p, index, terrainY, collider) {
             if (dist < splashRadius + 20) {
                 // How many of this tank's own turns it cannot move for.
                 tank.stuckTurns = 4;
+
+                // Track "hit" for combo purposes, even if no damage is dealt
+                if (p.shooter === player && tank === enemy) {
+                    if (!GAME.shotHitThisTurn) {
+                        GAME.playerHits++;
+                        GAME.playerConsecutiveHits++;
+                        GAME.shotHitThisTurn = true;
+                        GAME.comboPopup = {
+                            text: GAME.playerConsecutiveHits >= 3 ? `ARCFIRE ${GAME.playerConsecutiveHits}X!` : `${GAME.playerConsecutiveHits}X COMBO!`,
+                            color: GAME.playerConsecutiveHits >= 3 ? "#ffb443" : "#8ad6ff",
+                            scale: 1.0,
+                            timer: 1.6
+                        };
+                    }
+                } else if (p.shooter === enemy && tank === player) {
+                    if (!GAME.shotHitThisTurn) {
+                        GAME.enemyHits++;
+                        GAME.enemyConsecutiveHits++;
+                        GAME.shotHitThisTurn = true;
+                        GAME.comboPopup = {
+                            text: GAME.enemyConsecutiveHits >= 3 ? `ARCFIRE ${GAME.enemyConsecutiveHits}X!` : `${GAME.enemyConsecutiveHits}X COMBO!`,
+                            color: GAME.enemyConsecutiveHits >= 3 ? "#ffb443" : "#8ad6ff",
+                            scale: 1.0,
+                            timer: 1.6
+                        };
+                    }
+                }
+
                 GAME.effects.push({
                     type: "text",
                     x: tank.x,
