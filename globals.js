@@ -55,6 +55,20 @@ const GAME = {
     theme: "bright",            // "bright" | "pale"
     killedEnemies: 0,           // Number of enemies killed in Endless mode
     ammoTypes: ["Standard", "Cluster", "Oil", "Napalm"],
+    credits: 0,                 // Currency for shop
+    ammoUnlocked: [true, false, false, false], // Unlock status for each ammo type
+    playerUpgrades: {
+        armor: 0,               // Reduces damage taken
+        pointer: 0              // Improves trajectory aid
+    },
+    ammoPrices: {
+        unlock: [0, 500, 400, 600], // Price to unlock slots
+        refill: [0, 150, 100, 200]  // Price per shell refill
+    },
+    upgradePrices: {
+        armor: [200, 450, 800, 1200, 2000],
+        pointer: [150, 350, 650, 1000, 1600]
+    }
 };
 
 const keys = Object.create(null);

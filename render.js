@@ -231,10 +231,11 @@ function drawAimGuide() {
     let vx = Math.cos(rad) * activeTank.power * 0.165;
     let vy = Math.sin(rad) * activeTank.power * 0.165;
 
-    for (let i = 0; i < 35; i++) {
+    const steps = 35 + (activeTank === player ? (GAME.playerUpgrades.pointer * 12) : 0);
+    for (let i = 0; i < steps; i++) {
         // Step 2 frames per iteration to preview trajectory far out efficiently
-        x += vx; y += vy; vy += GAME.gravity; vx += GAME.wind;
-        x += vx; y += vy; vy += GAME.gravity; vx += GAME.wind;
+        x += vx; y += vy; vy += GAME.gravity; vx += GAME.wind * 1.15;
+        x += vx; y += vy; vy += GAME.gravity; vx += GAME.wind * 1.15;
         preview.push({ x, y });
         if (y > getTerrainY(x)) break;
     }
@@ -243,9 +244,9 @@ function drawAimGuide() {
     for (let i = 0; i < preview.length; i++) {
         const p = preview[i];
         ctx.globalAlpha = 1 - i / preview.length;
-        ctx.fillStyle = "#ffffff";
+        ctx.fillStyle = (activeTank === player && i > 35) ? "#ffd54f" : "#ffffff";
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 2.4 - i * 0.03, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 2.4 - i * (2.4 / preview.length), 0, Math.PI * 2);
         ctx.fill();
     }
     ctx.restore();
@@ -1063,10 +1064,11 @@ function drawAmmoHotbar() {
         const x = startX + i * (boxSize + margin);
         const y = startY;
         const isSelected = activeTank.selectedAmmoSlot === i;
+        const isUnlocked = GAME.mode === 'multiplayer' || (activeTank === player ? GAME.ammoUnlocked[i] : true);
 
         // Box background
-        ctx.fillStyle = isSelected ? "rgba(255, 213, 79, 0.15)" : "rgba(6, 14, 24, 0.85)";
-        ctx.strokeStyle = isSelected ? "#ffd54f" : "rgba(255, 255, 255, 0.12)";
+        ctx.fillStyle = isSelected ? "rgba(255, 213, 79, 0.15)" : (!isUnlocked ? "rgba(255, 255, 255, 0.02)" : "rgba(6, 14, 24, 0.85)");
+        ctx.strokeStyle = isSelected ? "#ffd54f" : (!isUnlocked ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.12)");
         ctx.lineWidth = isSelected ? 2.5 : 1;
         
         roundRect(ctx, x, y, boxSize, boxSize, 10, true, true);
@@ -1086,6 +1088,16 @@ function drawAmmoHotbar() {
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
         ctx.fillText(i + 1, x + 6, y + 4);
+
+        if (!isUnlocked) {
+            // Draw Lock Icon
+            ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+            ctx.font = "18px serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("🔒", x + boxSize/2, y + boxSize/2);
+            continue;
+        }
 
         // Ammo remaining badge (Standard shows infinity) – Top Right
         ctx.font = "bold 11px 'Orbitron', sans-serif";

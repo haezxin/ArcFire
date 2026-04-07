@@ -111,11 +111,65 @@
                         <div class="stat-row"><span>Direct Hits</span><span id="statHits">0</span></div>
                         <div class="stat-row"><span>Accuracy</span><span id="statAccuracy">0%</span></div>
                         <div class="stat-row"><span>Damage Dealt</span><span id="statDamage">0</span></div>
+                        <div class="stat-row"><span>Credits Gained</span><span id="statCredits" style="color: var(--accent);">0</span></div>
                     </div>
 
                     <div class="btn-row" style="margin-top:28px;">
                         <button id="nextLevelBtn" class="primary-btn">Next Level</button>
+                        <button id="shopBtn" class="secondary-btn" onclick="openShop()">Go to Shop</button>
                         <button id="endMenuBtn" class="secondary-btn">Quit to Menu</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shop Screen -->
+            <div id="shopScreen" class="intro-screen hidden">
+                <div class="intro-content shop-inner">
+                    <div class="shop-header">
+                        <div class="shop-title-wrap">
+                            <h1 style="font-size: 40px; letter-spacing: 6px; margin: 0;">ARMORY</h1>
+                            <div class="credits-display"><span class="cr-label">CREDITS:</span> <span id="shopCreditsDisplay">0</span></div>
+                        </div>
+                        <p class="shop-tagline">Upgrade tactical systems or refill munitions.</p>
+                    </div>
+
+                    <div class="shop-grid">
+                        <!-- Upgrades Section -->
+                        <div class="shop-column">
+                            <h3>PERMANENT UPGRADES</h3>
+                            <div class="upgrade-item">
+                                <div class="up-info">
+                                    <div class="up-name">KINETIC PLATING <span class="up-lvl" id="armorLvl">LVL 0</span></div>
+                                    <div class="up-desc">Reduces impact damage by 6% per level.</div>
+                                </div>
+                                <button class="shop-buy-btn" id="buyArmorBtn" onclick="buyUpgrade('armor')">
+                                    <div class="buy-label">UPGRADE</div>
+                                    <div class="buy-price" id="armorPrice">200 Cr</div>
+                                </button>
+                            </div>
+                            <div class="upgrade-item">
+                                <div class="up-info">
+                                    <div class="up-name">BALLISTIC COMPUTER <span class="up-lvl" id="pointerLvl">LVL 0</span></div>
+                                    <div class="up-desc">Extends the visual trajectory guide.</div>
+                                </div>
+                                <button class="shop-buy-btn" id="buyPointerBtn" onclick="buyUpgrade('pointer')">
+                                    <div class="buy-label">UPGRADE</div>
+                                    <div class="buy-price" id="pointerPrice">150 Cr</div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Ammo Section -->
+                        <div class="shop-column">
+                            <h3>MUNITIONS DEPOT</h3>
+                            <div id="ammoShopList">
+                                <!-- Dynamically populated -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="shop-actions">
+                        <button class="primary-btn" onclick="closeShop()">Return to Battle</button>
                     </div>
                 </div>
             </div>

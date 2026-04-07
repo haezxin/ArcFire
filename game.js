@@ -42,11 +42,14 @@ function resetGame() {
     enemy.scale = 1.0;
     player.effectTurns = 0;
     enemy.effectTurns = 0;
+    player.stuckTurns = 0;
+    enemy.stuckTurns = 0;
     player.hasHomingMissile = false;
     enemy.hasHomingMissile = false;
 
-    // Ammo inventory reset
-    player.ammoCounts = [Infinity, 3, 4, 4];
+    // Ammo inventory reset (Preserve unlocked status, but refill some base amounts)
+    player.ammoCounts = [Infinity, Math.max(player.ammoCounts[1], 3), Math.max(player.ammoCounts[2], 2), Math.max(player.ammoCounts[3], 2)];
+    // Enemy gets fresh ammo every round
     enemy.ammoCounts = [Infinity, 3, 4, 4];
     player.selectedAmmoSlot = 0;
     enemy.selectedAmmoSlot = 0;
@@ -145,6 +148,7 @@ function respawnEnemy() {
     enemy.power = 50;
     enemy.scale = 1.0;
     enemy.effectTurns = 0;
+    enemy.stuckTurns = 0;
 
     // Play respawn sound if exists
     if (typeof SFX !== "undefined") {
@@ -310,9 +314,9 @@ document.addEventListener("keydown", e => {
     // Usually only movement is restricted. I'll allow ammo switching.
 
     if (key === "1") activeTank.selectedAmmoSlot = 0;
-    if (key === "2") activeTank.selectedAmmoSlot = 1;
-    if (key === "3") activeTank.selectedAmmoSlot = 2;
-    if (key === "4") activeTank.selectedAmmoSlot = 3;
+    if (key === "2" && (GAME.mode === 'multiplayer' || activeTank !== player || GAME.ammoUnlocked[1])) activeTank.selectedAmmoSlot = 1;
+    if (key === "3" && (GAME.mode === 'multiplayer' || activeTank !== player || GAME.ammoUnlocked[2])) activeTank.selectedAmmoSlot = 2;
+    if (key === "4" && (GAME.mode === 'multiplayer' || activeTank !== player || GAME.ammoUnlocked[3])) activeTank.selectedAmmoSlot = 3;
 
     if (e.key === "Escape") {
         e.preventDefault();
@@ -566,6 +570,116 @@ document.querySelectorAll(".menu-tab").forEach(tab => {
         GAME.screenShake = 2;
     });
 });
+
+// ── SHOP SYSTEM ──────────────────────────────────────────────────────────
+
+function openShop() {
+    document.getElementById("gameOverScreen").classList.add("hidden");
+    document.getElementById("shopScreen").classList.remove("hidden");
+    updateShopUI();
+}
+
+function closeShop() {
+    document.getElementById("shopScreen").classList.add("hidden");
+    document.getElementById("gameOverScreen").classList.remove("hidden");
+}
+
+function updateShopUI() {
+    document.getElementById("shopCreditsDisplay").textContent = GAME.credits;
+    
+    // Update Upgrade buttons
+    const armorLvl = GAME.playerUpgrades.armor;
+    const armorPrice = GAME.upgradePrices.armor[armorLvl];
+    document.getElementById("armorLvl").textContent = `LVL ${armorLvl}`;
+    const armorBtn = document.getElementById("buyArmorBtn");
+    if (armorLvl >= 5) {
+        armorBtn.disabled = true;
+        document.getElementById("armorPrice").textContent = "MAXED";
+    } else {
+        armorBtn.disabled = GAME.credits < armorPrice;
+        document.getElementById("armorPrice").textContent = `${armorPrice} Cr`;
+    }
+
+    const pointerLvl = GAME.playerUpgrades.pointer;
+    const pointerPrice = GAME.upgradePrices.pointer[pointerLvl];
+    document.getElementById("pointerLvl").textContent = `LVL ${pointerLvl}`;
+    const pointerBtn = document.getElementById("buyPointerBtn");
+    if (pointerLvl >= 5) {
+        pointerBtn.disabled = true;
+        document.getElementById("pointerPrice").textContent = "MAXED";
+    } else {
+        pointerBtn.disabled = GAME.credits < pointerPrice;
+        document.getElementById("pointerPrice").textContent = `${pointerPrice} Cr`;
+    }
+
+    // Populate Ammo Shop
+    const ammoContainer = document.getElementById("ammoShopList");
+    ammoContainer.innerHTML = "";
+    
+    for (let i = 1; i < GAME.ammoTypes.length; i++) {
+        const name = GAME.ammoTypes[i];
+        const unlocked = GAME.ammoUnlocked[i];
+        const count = player.ammoCounts[i];
+        const unlockPrice = GAME.ammoPrices.unlock[i];
+        const refillPrice = GAME.ammoPrices.refill[i];
+
+        const item = document.createElement("div");
+        item.className = "ammo-shop-item";
+        
+        let actionBtnHtml = "";
+        if (!unlocked) {
+            actionBtnHtml = `
+                <button class="shop-buy-btn" onclick="buyAmmo(${i}, false)" ${GAME.credits < unlockPrice ? 'disabled' : ''}>
+                    <div class="buy-label">UNLOCK</div>
+                    <div class="buy-price">${unlockPrice} Cr</div>
+                </button>
+            `;
+        } else {
+            actionBtnHtml = `
+                <button class="shop-buy-btn" onclick="buyAmmo(${i}, true)" ${GAME.credits < refillPrice ? 'disabled' : ''}>
+                    <div class="buy-label">REFILL +5</div>
+                    <div class="buy-price">${refillPrice} Cr</div>
+                </button>
+            `;
+        }
+
+        item.innerHTML = `
+            <div class="up-info">
+                <div class="up-name">${name.toUpperCase()} <span class="ammo-status ${unlocked ? 'ammo-unlocked' : 'ammo-locked'}">${unlocked ? 'UNLOCKED' : 'LOCKED'}</span></div>
+                <div class="up-desc">${unlocked ? 'In Stock: ' + count : 'Strategic munition. Precise payload.'}</div>
+            </div>
+            ${actionBtnHtml}
+        `;
+        ammoContainer.appendChild(item);
+    }
+}
+
+function buyUpgrade(type) {
+    const lvl = GAME.playerUpgrades[type];
+    const price = GAME.upgradePrices[type][lvl];
+    
+    if (GAME.credits >= price && lvl < 5) {
+        GAME.credits -= price;
+        GAME.playerUpgrades[type]++;
+        if (typeof SFX !== "undefined") SFX.play("powerUp"); // Reuse powerup sound for purchase
+        updateShopUI();
+    }
+}
+
+function buyAmmo(idx, isRefill) {
+    const price = isRefill ? GAME.ammoPrices.refill[idx] : GAME.ammoPrices.unlock[idx];
+    
+    if (GAME.credits >= price) {
+        GAME.credits -= price;
+        if (isRefill) {
+            player.ammoCounts[idx] += 5;
+        } else {
+            GAME.ammoUnlocked[idx] = true;
+        }
+        if (typeof SFX !== "undefined") SFX.play("powerUp");
+        updateShopUI();
+    }
+}
 
 // ── BOOT ──
 preloadImages(SOURCES, () => {

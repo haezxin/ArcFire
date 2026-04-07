@@ -509,6 +509,12 @@ function checkObstacleHit(projectile) {
 function applyDamage(tank, amount, sourceProjectile = null) {
     if (!tank.alive) return;
 
+    // Apply armor reduction for player
+    if (tank === player) {
+        const armorReduction = 0.06 * (GAME.playerUpgrades.armor || 0);
+        amount = Math.round(amount * (1.0 - Math.min(0.3, armorReduction)));
+    }
+    
     tank.hp = clamp(tank.hp - amount, 0, tank.maxHp);
     tank.hitFlash = 0.18;
 
@@ -584,9 +590,19 @@ function applyDamage(tank, amount, sourceProjectile = null) {
 
         GAME.state = "gameover";
 
-        // Update scores
-        if (winnerTank === player) GAME.playerScore++;
-        else GAME.enemyScore++;
+        // Update scores and award credits
+        let reward = 0;
+        if (winnerTank === player) {
+            GAME.playerScore++;
+            // Victory bonus: 500 Credits + damage-based bonus
+            reward = 500 + Math.round(GAME.playerDamageDealt * 0.45);
+            GAME.credits += reward;
+        } else {
+            GAME.enemyScore++;
+            // Defeat consolation: 150 Credits + small damage bonus
+            reward = 150 + Math.round(GAME.playerDamageDealt * 0.2);
+            GAME.credits += reward;
+        }
         GAME.round++;
 
         setTimeout(() => {
@@ -625,6 +641,7 @@ function applyDamage(tank, amount, sourceProjectile = null) {
             document.getElementById("statHits").textContent = hits;
             document.getElementById("statAccuracy").textContent = acc + "%";
             document.getElementById("statDamage").textContent = Math.round(dmg);
+            document.getElementById("statCredits").textContent = Math.round(reward);
 
             document.getElementById("gameOverScreen").classList.remove("hidden");
         }, 1500);
