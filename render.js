@@ -484,15 +484,22 @@ function drawTank(tank) {
 
 function _drawTankParachuting(tank, prefix, dir) {
     const key = tank.color === "green" ? "tankBlueParachute" : "tankRedParachute";
-    const img = IMAGES[key];
-    if (img && img.complete && img.width > 0) {
-        ctx.drawImage(img, -48, -71, 96, 96);
+    const paraImg = IMAGES[key] || IMAGES["parachute"];
+    if (paraImg && paraImg.complete && paraImg.width > 0) {
+        // Draw parachute above the tank
+        ctx.drawImage(paraImg, -48, -71, 96, 96);
+    }
+
+    // Draw the tank body underneath the parachute. If tank is custom, draw
+    // its parts; otherwise draw the preassembled sprite.
+    if (tank.isCustom) {
+        // _drawTankCustom expects terrainAngle but during parachute we use 0
+        _drawTankCustom(tank, 0);
     } else {
-        const para = IMAGES["parachute"];
-        if (para && para.complete && para.width > 0) ctx.drawImage(para, -32, -135, 64, 64);
         const tankImg = IMAGES[`${prefix}_idle_${dir}`];
-        if (tankImg && tankImg.complete && tankImg.width > 0)
+        if (tankImg && tankImg.complete && tankImg.width > 0) {
             ctx.drawImage(tankImg, -48, -71, 96, 96);
+        }
     }
 }
 
