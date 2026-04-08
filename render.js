@@ -82,6 +82,8 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke) {
 }
 
 function drawTank(tank) {
+    if (!tank.alive && tank.state === "exploding") return; // Explosion effect handles rendering
+
     const x = tank.x;
     const y = tank.y;
     const angle = tank.state === "parachuting" ? 0 : getTerrainAngle(x); 
@@ -412,8 +414,8 @@ function drawEffects() {
             ctx.restore();
         }
 
-        if (effect.type === "explosion" || effect.type === "bigExplosion") {
-            const scale = effect.type === "bigExplosion" ? 1.45 : 1;
+        if (effect.type === "explosion") {
+            const scale = 1;
             const r = effect.radius * (0.25 + progress) * scale;
 
             ctx.save();
@@ -428,6 +430,21 @@ function drawEffects() {
             ctx.arc(effect.x, effect.y, r, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
+        }
+
+        if (effect.type === "bigExplosion") {
+            const frame = Math.floor(progress * 11) + 1;
+            const imgKey = `explosion_${frame}`;
+            const img = IMAGES[imgKey];
+            if (img) {
+                ctx.save();
+                ctx.globalAlpha = 1 - progress * 0.8;
+                const scale = 1.2;
+                const w = img.naturalWidth * scale;
+                const h = img.naturalHeight * scale;
+                ctx.drawImage(img, effect.x - w/2, effect.y - h/2, w, h);
+                ctx.restore();
+            }
         }
 
         if (effect.type === "smoke") {

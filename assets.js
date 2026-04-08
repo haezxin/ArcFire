@@ -201,6 +201,20 @@ const SOURCES = {
     tank_navy_3: "PNG/Default size/tanks_tankNavy3.png",
     tank_navy_4: "PNG/Default size/tanks_tankNavy4.png",
     tank_navy_5: "PNG/Default size/tanks_tankNavy5.png",
+
+    // ── Explosion frames
+    explosion_1: "PNG/Default size/tank_explosion1.png",
+    explosion_2: "PNG/Default size/tank_explosion2.png",
+    explosion_3: "PNG/Default size/tank_explosion3.png",
+    explosion_4: "PNG/Default size/tank_explosion4.png",
+    explosion_5: "PNG/Default size/tank_explosion5.png",
+    explosion_6: "PNG/Default size/tank_explosion6.png",
+    explosion_7: "PNG/Default size/tank_explosion7.png",
+    explosion_8: "PNG/Default size/tank_explosion8.png",
+    explosion_9: "PNG/Default size/tank_explosion9.png",
+    explosion_10: "PNG/Default size/tank_explosion10.png",
+    explosion_11: "PNG/Default size/tank_explosion11.png",
+    explosion_12: "PNG/Default size/tank_explosion12.png",
 };
 
 function preloadImages(sources, callback) {
