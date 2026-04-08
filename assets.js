@@ -126,6 +126,15 @@ const SOURCES = {
     crater2_war4_pale: "War1/Pale/crater2.png",
     crater3_war4_pale: "War1/Pale/crater3.png",
 
+    // ── Obstacles (Barrels & Crates)
+    obs_barrel_red: "PNG/Default size/tanks_barrelRed.png",
+    obs_barrel_green: "PNG/Default size/tanks_barrelGreen.png",
+    obs_barrel_grey: "PNG/Default size/tanks_barrelGrey.png",
+    obs_crate_wood: "PNG/Default size/tanks_crateWood.png",
+    obs_crate_armor: "PNG/Default size/tanks_crateArmor.png",
+    obs_crate_repair: "PNG/Default size/tanks_crateRepair.png",
+    obs_crate_ammo: "PNG/Default size/tanks_crateAmmo.png",
+
     // ── Powerups & misc
     size_power_up: "powerups/targetSize.png",
     missile1: "powerups/missile1.png",

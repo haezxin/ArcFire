@@ -74,10 +74,13 @@ function resetGame() {
     createSkyDecor();
 
     const wheels = ["dec_war4_wheels1", "dec_war4_wheels2", "dec_war4_wheels3"];
+    const barrels = ["obs_barrel_red", "obs_barrel_green", "obs_barrel_grey"];
+    const crates = ["obs_crate_wood", "obs_crate_armor", "obs_crate_repair", "obs_crate_ammo"];
+    
     const WAR_OBSTACLES = { 1: wheels, 2: wheels, 3: wheels, 4: wheels };
 
     const lv = Math.min(GAME.level, 4);
-    const obsList = WAR_OBSTACLES[lv] || [];
+    const obsList = [...WAR_OBSTACLES[lv] || [], ...barrels, ...crates];
 
     GAME.obstacles = [];
     let numObstacles = Math.floor(Math.random() * 3) + 1 + Math.floor(GAME.difficulty / 2);
@@ -85,25 +88,37 @@ function resetGame() {
         let ox = 250 + Math.random() * 600;
         let hp = 80 + (GAME.difficulty - 1) * 20;
 
-        let obsType = Math.random() > 0.5 ? "bunker" : "rockwall";
-        let ow = 36 + Math.random() * 16;
-        let oh = 40 + Math.random() * 30;
+        let obsType = "image";
+        let ow = 50;
+        let oh = 60;
         let imgKey = null;
 
         if (obsList.length > 0) {
             const baseKey = obsList[Math.floor(Math.random() * obsList.length)];
-            const attemptKey = `${baseKey}_${GAME.theme}`;
-            const croppedImg = getCroppedImage(attemptKey);
-
-            if (croppedImg && croppedImg.width > 0) {
-                imgKey = attemptKey + "_cropped";
-                if (!IMAGES[imgKey]) imgKey = attemptKey; // Fallback if no crop needed
+            let attemptKey = baseKey;
+            
+            // Add theme suffix for wheel obstacles only
+            if (baseKey.startsWith("dec_war4_wheels")) {
+                attemptKey = `${baseKey}_${GAME.theme}`;
+            }
+            
+            // Check if image exists and load it
+            const img = IMAGES[attemptKey];
+            if (img && img.complete && img.naturalWidth > 0) {
+                imgKey = attemptKey;
                 obsType = "image";
-
-                const maxDim = 80 + Math.random() * 50;
-                const scale = maxDim / Math.max(croppedImg.width || croppedImg.naturalWidth, croppedImg.height || croppedImg.naturalHeight);
-                ow = (croppedImg.width || croppedImg.naturalWidth) * scale;
-                oh = (croppedImg.height || croppedImg.naturalHeight) * scale;
+                
+                // Scale based on image dimensions
+                const maxDim = 60 + Math.random() * 30;
+                const scale = maxDim / Math.max(img.naturalWidth, img.naturalHeight);
+                ow = img.naturalWidth * scale;
+                oh = img.naturalHeight * scale;
+            } else {
+                // Fallback: use procedural shapes if image not loaded
+                obsType = Math.random() > 0.5 ? "bunker" : "rockwall";
+                ow = 36 + Math.random() * 16;
+                oh = 40 + Math.random() * 30;
+                imgKey = null;
             }
         }
 

@@ -342,7 +342,8 @@ function drawObstacles() {
         let drawn = false;
         if (obs.type === "image" && obs.imgKey) {
             const img = IMAGES[obs.imgKey];
-            if (img && (img.width > 0 || img.naturalWidth > 0)) {
+            if (img && img.complete && (img.width > 0 || img.naturalWidth > 0)) {
+                ctx.globalCompositeOperation = "source-over";
                 ctx.drawImage(img, -obs.width / 2, -obs.height, obs.width, obs.height);
                 drawn = true;
             }
@@ -370,6 +371,7 @@ function drawObstacles() {
         }
 
         // Health bar for the obstacle
+        ctx.globalCompositeOperation = "source-over";
         ctx.fillStyle = "rgba(0,0,0,0.5)";
         ctx.fillRect(-obs.width / 2, -obs.height - 14, obs.width, 5);
         ctx.fillStyle = "#7aff7a";
