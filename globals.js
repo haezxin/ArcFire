@@ -61,6 +61,7 @@ const GAME = {
         armor: 0,               // Reduces damage taken
         pointer: 0              // Improves trajectory aid
     },
+    // Debugging toggles (removed after verification)
     ammoPrices: {
         unlock: [0, 800, 1200, 1500],
         refill: [0, 400, 600, 750]

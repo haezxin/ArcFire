@@ -1,5 +1,6 @@
 const SOURCES = {
-    parachute: "globalAssets/parachute.png",
+    // Use existing tank parachute image as fallback for generic parachute asset
+    parachute: "globalAssets/tankBlueParachute.png",
     tankBlueParachute: "globalAssets/tankBlueParachute.png",
     tankRedParachute: "globalAssets/tankRedParachute.png",
     blue_idle_left: "bluetank/tank_left.png",

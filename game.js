@@ -1,5 +1,45 @@
 // ── ArcFire Main entry point ────────────────────────────────────────────────
 
+function getSafeTankX(preferredX) {
+    // Smarter spawn placement: search outward from preferredX alternating
+    // left/right with small steps until a safe X is found. Avoids spawning
+    // tanks inside obstacle horizontal footprints (takes tank width into account).
+    const tankHalfWidth = 48;
+    const margin = 12; // extra breathing room
+    const step = 16;
+    const maxAttempts = 60;
+
+    const isBlocked = (x) => GAME.obstacles.some(obs => {
+        if (!obs.alive) return false;
+        const obsHalf = (obs.width || 48) / 2;
+        const minX = obs.x - obsHalf - tankHalfWidth - margin;
+        const maxX = obs.x + obsHalf + tankHalfWidth + margin;
+        return x >= minX && x <= maxX;
+    });
+
+    // Clamp preferredX into play bounds first
+    const minBound = 80;
+    const maxBound = GAME.width - 80;
+    preferredX = Math.max(minBound, Math.min(maxBound, preferredX));
+
+    if (!isBlocked(preferredX)) return preferredX;
+
+    for (let i = 1; i <= maxAttempts; i++) {
+        const left = preferredX - i * step;
+        const right = preferredX + i * step;
+        if (left >= minBound && !isBlocked(left)) return left;
+        if (right <= maxBound && !isBlocked(right)) return right;
+    }
+
+    // Attach direct parent references for stacked obstacles (helps resolver)
+    const obsById = {};
+    GAME.obstacles.forEach(o => { if (o && o.id) obsById[o.id] = o; });
+    GAME.obstacles.forEach(o => { if (o && o.stackedOn && obsById[o.stackedOn]) o.parentRef = obsById[o.stackedOn]; });
+
+    // Fallback to clamped preferredX
+    return preferredX;
+}
+
 function resetGame() {
     GAME.effects = [];
     GAME.projectile = null;
@@ -73,63 +113,276 @@ function resetGame() {
     createTerrain();
     createSkyDecor();
 
-    const wheels = ["dec_war4_wheels1", "dec_war4_wheels2", "dec_war4_wheels3"];
     const barrels = ["obs_barrel_red", "obs_barrel_green", "obs_barrel_grey"];
-    const crates = ["obs_crate_wood", "obs_crate_armor", "obs_crate_repair", "obs_crate_ammo"];
-    
-    const WAR_OBSTACLES = { 1: wheels, 2: wheels, 3: wheels, 4: wheels };
+    const crates = ["obs_crate_wood"];
 
-    const lv = Math.min(GAME.level, 4);
-    const obsList = [...barrels, "obs_crate_wood"];
+    // Per-level obstacle appearance sets (use different mixes per level)
+    const LEVEL_OBSTACLE_SETS = {
+        1: ["obs_crate_wood"],                         // Wood crate focused
+        2: ["obs_barrel_red", "obs_barrel_grey"],   // Barrels (desert/ruins)
+        3: ["obs_barrel_green", "obs_crate_wood"],  // Mixed urban
+        4: ["obs_barrel_grey", "obs_crate_wood"],   // Night city mix
+        // Procedural levels: include both types but vary shapes
+        5: [...barrels, ...crates],
+        6: [...barrels, ...crates],
+        7: [...barrels, ...crates],
+        8: [...barrels, ...crates],
+        9: [...barrels, ...crates]
+    };
+
+    const obsList = LEVEL_OBSTACLE_SETS[GAME.level] || [...barrels, ...crates];
+
+    const OBSTACLE_SIZE = 48;
+    const OBSTACLE_HEIGHT = 48;
+    const STACK_PATTERNS = [
+        [[1]],
+        [[1, 1]],
+        [[1], [1]],
+        [[1, 1], [1, 1]],
+        [[1, 1, 1]],
+        [[1], [1, 1], [1, 1, 1]],
+        [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+    ];
+    const SINGLE_PLAYER_PATTERNS = {
+        1: [[1]],                     // Single block
+        2: [[1], [1]],               // Two stacked blocks
+        3: [[1, 1], [1, 1]],         // 2x2 square
+        4: [[1], [1, 1], [1, 1, 1]]  // Pyramid
+    };
+
+    // Define stacked patterns for creating vertical structures
+    const STACKED_PATTERNS = {
+        "2x2": [
+            [1, 1],
+            [1, 1]
+        ],
+        "3x3": [
+            [1, 1, 1],
+            [1, 1, 1],
+            [1, 1, 1]
+        ],
+        "pyramid": [
+            [1],           // Top of pyramid
+            [1, 1],        // Middle layer
+            [1, 1, 1]      // Base layer
+        ]
+    };
 
     GAME.obstacles = [];
-    let numObstacles = Math.floor(Math.random() * 3) + 1 + Math.floor(GAME.difficulty / 2);
-    for (let i = 0; i < numObstacles; i++) {
-        let ox = 250 + Math.random() * 600;
-        let hp = 80 + (GAME.difficulty - 1) * 20;
+    let numStructures = GAME.mode === 'single' ? 1 : Math.floor(Math.random() * 2) + 1 + Math.floor(GAME.difficulty / 3);
+    const placedRanges = [];
+    let obstacleIdCounter = 1;
 
-        let obsType = "image";
-        let ow = 50;
-        let oh = 60;
-        let imgKey = null;
-
-        if (obsList.length > 0) {
-            const baseKey = obsList[Math.floor(Math.random() * obsList.length)];
-            let attemptKey = baseKey;
-            
-            // Add theme suffix for wheel obstacles only
-            if (baseKey.startsWith("dec_war4_wheels")) {
-                attemptKey = `${baseKey}_${GAME.theme}`;
-            }
-            
-            // Check if image exists and load it
-            const img = IMAGES[attemptKey];
-            if (img && img.complete && img.naturalWidth > 0) {
-                imgKey = attemptKey;
-                obsType = "image";
-                
-                // Scale based on image dimensions
-                const maxDim = 60 + Math.random() * 30;
-                const scale = maxDim / Math.max(img.naturalWidth, img.naturalHeight);
-                ow = img.naturalWidth * scale;
-                oh = img.naturalHeight * scale;
+    for (let i = 0; i < numStructures; i++) {
+        let structure;
+        if (GAME.mode === 'single') {
+            // Use specific patterns for single player mode
+            if (GAME.level === 1) {
+                structure = [[1]]; // Single block
+            } else if (GAME.level === 2) {
+                structure = [[1], [1]]; // Two stacked blocks
+            } else if (GAME.level === 3) {
+                structure = STACKED_PATTERNS["2x2"]; // 2x2 square
+            } else if (GAME.level === 4) {
+                structure = STACKED_PATTERNS.pyramid; // Pyramid
             } else {
-                // Fallback: use procedural shapes if image not loaded
-                obsType = Math.random() > 0.5 ? "bunker" : "rockwall";
-                ow = 36 + Math.random() * 16;
-                oh = 40 + Math.random() * 30;
-                imgKey = null;
+                structure = STACK_PATTERNS[0]; // Default fallback
+            }
+        } else {
+            // Random pattern for other modes
+            structure = STACK_PATTERNS[Math.floor(Math.random() * STACK_PATTERNS.length)];
+        }
+        
+        // For pyramid pattern, we need to handle the centering differently
+        if (GAME.mode === 'single' && GAME.level === 4) {
+            // Keep the pyramid structure as is, but we'll handle centering in positioning
+        } else {
+            // Filter out any zero values (empty spaces in pyramid pattern)
+            structure = structure.map(row => row.filter(cell => cell !== 0));
+            // Remove empty rows
+            structure = structure.filter(row => row.length > 0);
+        }
+        
+        // Special handling for pyramid to center rows properly
+        if (GAME.mode === 'single' && GAME.level === 4) {
+            // The pyramid structure is already centered in our definition
+        }
+        
+        let structureWidth = Math.max(...structure.map(row => row.length));
+        let halfWidth = (structureWidth * OBSTACLE_SIZE) / 2;
+        let candidateX = null;
+
+        for (let attempt = 0; attempt < 30; attempt++) {
+            let ox = 120 + halfWidth + Math.random() * (GAME.width - 240 - structureWidth * OBSTACLE_SIZE);
+            let left = ox - halfWidth - 8;
+            let right = ox + halfWidth + 8;
+            let overlaps = placedRanges.some(range => !(right < range.left || left > range.right));
+            if (!overlaps) {
+                candidateX = ox;
+                placedRanges.push({ left, right });
+                break;
             }
         }
 
-        GAME.obstacles.push({
-            x: ox, y: undefined, width: ow, height: oh,
-            type: obsType, imgKey: imgKey, hp: hp, maxHp: hp, alive: true
-        });
+        if (candidateX === null) continue;
+
+        let hp = 80 + (GAME.difficulty - 1) * 20;
+        const baseKeys = [];
+        for (let row of structure) {
+            for (let col = 0; col < row.length; col++) {
+                baseKeys.push(obsList[Math.floor(Math.random() * obsList.length)]);
+            }
+        }
+
+        // Create a mapping of obstacle positions to IDs for stacking
+        const obstaclePositions = {};
+        let keyIndex = 0;
+        const leftOrigin = candidateX - halfWidth;
+        
+        // Special handling for pyramid to center rows properly
+        let rowOffsets = [];
+        if (GAME.mode === 'single' && GAME.level === 4) {
+            // Calculate centering offsets for each row of the pyramid
+            const maxWidth = Math.max(...structure.map(row => row.length));
+            rowOffsets = structure.map(row => (maxWidth - row.length) * 0.5 * OBSTACLE_SIZE);
+        }
+        
+        // Process from bottom to top to ensure proper stacking
+        for (let row = structure.length - 1; row >= 0; row--) {
+            const cells = structure[row];
+            const rowOffset = (GAME.mode === 'single' && GAME.level === 4) 
+                ? rowOffsets[row] 
+                : (structureWidth - cells.length) * 0.5 * OBSTACLE_SIZE;
+            
+            for (let col = 0; col < cells.length; col++) {
+                const cellX = leftOrigin + (col * OBSTACLE_SIZE) + rowOffset;
+                // Choose image key from the level-specific obsList
+                const baseKey = baseKeys[keyIndex++] || obsList[Math.floor(Math.random() * obsList.length)];
+                let attemptKey = baseKey;
+                let imgKey = null;
+                let obsType = "image";
+
+                const img = IMAGES[attemptKey];
+                if (img && img.complete && img.naturalWidth > 0) {
+                    imgKey = attemptKey;
+                } else {
+                    obsType = Math.random() > 0.5 ? "bunker" : "rockwall";
+                    imgKey = null;
+                }
+
+                // Calculate the Y position based on terrain or stacking
+                let cellY;
+                let parentId = null;
+                
+                // For stacked structures, link to the obstacle directly below
+                if (row < structure.length - 1) {
+                    // This is not the bottom row, so it should be stacked
+                    const belowRow = row + 1;
+                    if (belowRow < structure.length) {
+                        const belowCells = structure[belowRow];
+                        // Find the cell directly below this one
+                        // Simple mapping: try to align columns as best as possible
+                        let belowCol = col;
+                        if (belowCells.length !== cells.length) {
+                            // Scale the column index to match the below row
+                            belowCol = Math.floor(col * (belowCells.length / cells.length));
+                            // Make sure it's within bounds
+                            belowCol = Math.max(0, Math.min(belowCol, belowCells.length - 1));
+                        }
+                        
+                        const parentPosKey = `${belowRow}-${belowCol}`;
+                        if (obstaclePositions[parentPosKey]) {
+                            parentId = obstaclePositions[parentPosKey];
+                        }
+                    }
+                }
+                
+                // If we have a parent, we'll calculate Y based on stacking
+                if (parentId) {
+                    cellY = undefined; // Will be calculated during rendering based on parent
+                } else {
+                    // This is a base obstacle, place it on the terrain
+                    cellY = getTerrainY(cellX);
+                }
+                
+                const obstacleId = `obs_${obstacleIdCounter++}`;
+                const posKey = `${row}-${col}`;
+                obstaclePositions[posKey] = obstacleId;
+
+                const obstacle = {
+                    id: obstacleId,
+                    x: cellX,
+                    y: cellY,
+                    width: OBSTACLE_SIZE,
+                    height: OBSTACLE_HEIGHT,
+                    type: obsType,
+                    imgKey: imgKey,
+                    hp: hp,
+                    maxHp: hp,
+                    alive: true
+                };
+                
+                // Add parentId if this obstacle is stacked
+                if (parentId) {
+                    obstacle.stackedOn = parentId;
+                }
+                
+                GAME.obstacles.push(obstacle);
+            }
+        }
+    }
+
+    // For procedural/random levels, create a few random stacked formations
+    if (GAME.level > 4 || GAME.mode === 'endless') {
+        // Scale formations with difficulty: higher difficulty -> larger formations
+        const difficulty = Math.max(1, GAME.difficulty || 1);
+        const maxBase = Math.min(6, 2 + difficulty + Math.floor(Math.random() * 2));
+        const formationCount = Math.min(4, 1 + difficulty + Math.floor(Math.random() * 2));
+
+        // Build a list of possible formation sizes biased by difficulty
+        const formationChoices = [];
+        for (let s = 3; s <= maxBase; s++) {
+            formationChoices.push({ cols: s, rows: s, mode: 'grid' });
+            formationChoices.push({ cols: s, rows: s, mode: 'pyramid' });
+            if (s > 3) formationChoices.push({ cols: s, rows: Math.max(2, s - 1), mode: 'grid' });
+        }
+
+        for (let f = 0; f < formationCount; f++) {
+            const choice = formationChoices[Math.floor(Math.random() * formationChoices.length)];
+            const baseX = 140 + Math.random() * (GAME.width - 280);
+            const prefix = `proc_f${f}_${Date.now() % 10000}`;
+            const form = createObstacleFormation({
+                baseX,
+                cols: choice.cols,
+                rows: choice.rows,
+                obsWidth: OBSTACLE_SIZE,
+                obsHeight: OBSTACLE_HEIGHT,
+                idPrefix: prefix,
+                mode: choice.mode,
+                imgKey: null,
+                hp
+            });
+
+            for (let j = 0; j < form.length; j++) {
+                const o = form[j];
+                const key = obsList[Math.floor(Math.random() * obsList.length)];
+                const img = IMAGES[key];
+                const useImage = img && img.complete && img.naturalWidth > 0;
+                o.imgKey = useImage ? key : null;
+                o.type = useImage ? 'image' : (Math.random() > 0.5 ? 'bunker' : 'rockwall');
+                o.hp = hp + (difficulty - 1) * 10; // tougher obstacles at higher difficulty
+                o.maxHp = o.hp;
+                o.alive = true;
+                GAME.obstacles.push(o);
+            }
+        }
     }
 
     const windMax = GAME.difficultyMode === "easy" ? 0.045 : (GAME.difficultyMode === "hard" ? 0.16 : 0.09);
     GAME.wind = (Math.random() * 2 - 1) * windMax;
+
+    player.x = getSafeTankX(player.x);
+    enemy.x = getSafeTankX(enemy.x);
 
     GAME.playerShots = 0;
     GAME.playerHits = 0;
@@ -159,7 +412,7 @@ function respawnEnemy() {
     enemy.animFrame = 0;
     enemy.animTimer = 0;
     enemy.randomizeParts(); // Modular randomization on rebirth!
-    enemy.x = 700 + Math.random() * 350; // Spawn on the right half
+    enemy.x = getSafeTankX(700 + Math.random() * 350); // Spawn on the right half
     enemy.angle = -145;
     enemy.power = 50;
     enemy.scale = 1.0;
@@ -253,6 +506,11 @@ function update(dt) {
 
     GAME.obstacles.forEach(obs => {
         if (!obs.alive) return;
+        // Don't overwrite stacked obstacles' y here; stacked items are
+        // positioned relative to their parents in the render pass.
+        if (obs.stackedOn || obs.parentRef) {
+            return;
+        }
         const targetY = getTerrainY(obs.x);
         if (obs.y === undefined) obs.y = targetY;
         if (obs.y < targetY) obs.y += 150 * dt;
@@ -264,6 +522,9 @@ function update(dt) {
         if (cloud.x - 40 > GAME.width) cloud.x = -cloud.w;
     });
 }
+
+// Keyboard toggle for debug overlays
+// Debug overlay toggle removed — rendering checks complete
 
 function render() {
     const shakeX = GAME.screenShake > 0 ? (Math.random() - 0.5) * GAME.screenShake : 0;
