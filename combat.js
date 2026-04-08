@@ -495,14 +495,67 @@ function checkTankHit(projectile, tank) {
 }
 
 function checkObstacleHit(projectile) {
+    // Build id map for obstacles for robust parent lookup
+    const obsById = {};
+    for (const o of GAME.obstacles) if (o && o.id) obsById[o.id] = o;
+
+    // Helper: resolve world Y of an obstacle by walking stackedOn chain
+    function resolveObstacleY(o) {
+        if (o.y !== undefined) return o.y;
+        // Walk up chain counting depth until we find a concrete y or run out
+        let depth = 0;
+        let current = o;
+        const visited = new Set();
+        while (current && current.stackedOn && !visited.has(current.stackedOn) && depth < 32) {
+            visited.add(current.stackedOn);
+            const parent = obsById[current.stackedOn] || current.parentRef;
+            if (!parent) break;
+            depth++;
+            if (parent.y !== undefined) {
+                return parent.y - depth * (o.height || 48);
+            }
+            current = parent;
+        }
+        // No explicit parent Y found — base on terrain at obstacle x and subtract stacked depth
+        const baseY = getTerrainY(o.x);
+        return baseY - depth * (o.height || 48);
+    }
+
+    // Swept-sample the projectile's recent motion to avoid tunneling.
+    const prevX = projectile.x - (projectile.vx || 0);
+    const prevY = projectile.y - (projectile.vy || 0);
+    const dx = projectile.x - prevX;
+    const dy = projectile.y - prevY;
+    const dist = Math.hypot(dx, dy);
+    const sampleStep = 3; // smaller step for higher accuracy
+    const steps = Math.max(1, Math.ceil(dist / sampleStep));
+    const radius = projectile.radius || 4;
+
     for (let obs of GAME.obstacles) {
         if (!obs.alive) continue;
-        let oy = obs.y !== undefined ? obs.y : getTerrainY(obs.x);
-        if (projectile.x > obs.x - obs.width / 2 && projectile.x < obs.x + obs.width / 2 &&
-            projectile.y > oy - obs.height && projectile.y < oy) {
-            return obs;
+        const oy = resolveObstacleY(obs);
+        const left = obs.x - (obs.width || 48) / 2 - radius;
+        const right = obs.x + (obs.width || 48) / 2 + radius;
+        const top = oy - (obs.height || 48) - radius;
+        const bottom = oy + radius;
+
+        // Quick AABB reject using projectile bounding around segment
+        const segMinX = Math.min(prevX, projectile.x) - radius;
+        const segMaxX = Math.max(prevX, projectile.x) + radius;
+        if (segMaxX < left || segMinX > right) continue;
+
+        for (let s = 0; s <= steps; s++) {
+            const t = s / steps;
+            const sx = prevX + dx * t;
+            const sy = prevY + dy * t;
+            if (sx >= left && sx <= right && sy >= top && sy <= bottom) {
+                projectile.x = sx;
+                projectile.y = sy;
+                return obs;
+            }
         }
     }
+
     return null;
 }
 

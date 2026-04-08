@@ -170,6 +170,9 @@ function resetGame() {
 
     GAME.obstacles = [];
     let numStructures = GAME.mode === 'single' ? 1 : Math.floor(Math.random() * 2) + 1 + Math.floor(GAME.difficulty / 3);
+    // For procedural levels (5+), skip the earlier random structures — we'll
+    // generate mapped formations later so the field matches the level design.
+    if (GAME.level > 4) numStructures = 0;
     const placedRanges = [];
     let obstacleIdCounter = 1;
 
@@ -334,46 +337,89 @@ function resetGame() {
 
     // For procedural/random levels, create a few random stacked formations
     if (GAME.level > 4 || GAME.mode === 'endless') {
-        // Scale formations with difficulty: higher difficulty -> larger formations
+        // Base HP scaled by difficulty for procedurally generated formations
         const difficulty = Math.max(1, GAME.difficulty || 1);
-        const maxBase = Math.min(6, 2 + difficulty + Math.floor(Math.random() * 2));
-        const formationCount = Math.min(4, 1 + difficulty + Math.floor(Math.random() * 2));
+        const baseHp = 80 + (difficulty - 1) * 20;
+        // Exact mapping for procedural levels: procedural index 1–5 (UI shows levels 5–9)
+        // We'll map GAME.level 5..9 -> procIndex 1..5 so the formations follow
+        // the user's Procedural Level 1..5 specification.
+        const LEVEL_FORMATION_MAP = {
+            1: [ { cols: 3, rows: 3, mode: 'grid' } ],
+            2: [ { cols: 4, rows: 4, mode: 'grid' } ],
+            3: [ { cols: 5, rows: 5, mode: 'grid' } ],
+            4: [ { cols: 5, rows: 5, mode: 'pyramid' }, { cols: 4, rows: 4, mode: 'grid' } ],
+            5: [ { cols: 6, rows: 6, mode: 'grid' }, { cols: 5, rows: 5, mode: 'pyramid' } ]
+        };
 
-        // Build a list of possible formation sizes biased by difficulty
-        const formationChoices = [];
-        for (let s = 3; s <= maxBase; s++) {
-            formationChoices.push({ cols: s, rows: s, mode: 'grid' });
-            formationChoices.push({ cols: s, rows: s, mode: 'pyramid' });
-            if (s > 3) formationChoices.push({ cols: s, rows: Math.max(2, s - 1), mode: 'grid' });
-        }
-
-        for (let f = 0; f < formationCount; f++) {
-            const choice = formationChoices[Math.floor(Math.random() * formationChoices.length)];
-            const baseX = 140 + Math.random() * (GAME.width - 280);
-            const prefix = `proc_f${f}_${Date.now() % 10000}`;
-            const form = createObstacleFormation({
-                baseX,
-                cols: choice.cols,
-                rows: choice.rows,
-                obsWidth: OBSTACLE_SIZE,
-                obsHeight: OBSTACLE_HEIGHT,
-                idPrefix: prefix,
-                mode: choice.mode,
-                imgKey: null,
-                hp
+        // Convert GAME.level (5..9) into procedural index 1..5
+        const procIndex = Math.max(1, Math.min(5, GAME.level - 4));
+        const mapped = LEVEL_FORMATION_MAP[procIndex];
+        if (mapped && mapped.length > 0) {
+            // Use exact formations for this level
+            mapped.forEach((choice, idx) => {
+                const baseX = 140 + (idx + 0.5) * (GAME.width - 280) / Math.max(1, mapped.length);
+                const prefix = `lvl${GAME.level}_f${idx}`;
+                const form = createObstacleFormation({
+                    baseX,
+                    cols: choice.cols,
+                    rows: choice.rows,
+                    obsWidth: OBSTACLE_SIZE,
+                    obsHeight: OBSTACLE_HEIGHT,
+                    idPrefix: prefix,
+                    mode: choice.mode,
+                    imgKey: null,
+                    hp: baseHp
+                });
+                form.forEach(o => {
+                    const key = obsList[Math.floor(Math.random() * obsList.length)];
+                    const img = IMAGES[key];
+                    const useImage = img && img.complete && img.naturalWidth > 0;
+                    o.imgKey = useImage ? key : null;
+                    o.type = useImage ? 'image' : (Math.random() > 0.5 ? 'bunker' : 'rockwall');
+                    o.hp = baseHp + (Math.max(0, difficulty - 1) * 10);
+                    o.maxHp = o.hp;
+                    o.alive = true;
+                    GAME.obstacles.push(o);
+                });
             });
-
-            for (let j = 0; j < form.length; j++) {
-                const o = form[j];
-                const key = obsList[Math.floor(Math.random() * obsList.length)];
-                const img = IMAGES[key];
-                const useImage = img && img.complete && img.naturalWidth > 0;
-                o.imgKey = useImage ? key : null;
-                o.type = useImage ? 'image' : (Math.random() > 0.5 ? 'bunker' : 'rockwall');
-                o.hp = hp + (difficulty - 1) * 10; // tougher obstacles at higher difficulty
-                o.maxHp = o.hp;
-                o.alive = true;
-                GAME.obstacles.push(o);
+        } else {
+            // Fallback to difficulty-scaled random generator
+            const difficulty = Math.max(1, GAME.difficulty || 1);
+            const maxBase = Math.min(6, 2 + difficulty + Math.floor(Math.random() * 2));
+            const formationCount = Math.min(4, 1 + difficulty + Math.floor(Math.random() * 2));
+            const formationChoices = [];
+            for (let s = 3; s <= maxBase; s++) {
+                formationChoices.push({ cols: s, rows: s, mode: 'grid' });
+                formationChoices.push({ cols: s, rows: s, mode: 'pyramid' });
+                if (s > 3) formationChoices.push({ cols: s, rows: Math.max(2, s - 1), mode: 'grid' });
+            }
+            for (let f = 0; f < formationCount; f++) {
+                const choice = formationChoices[Math.floor(Math.random() * formationChoices.length)];
+                const baseX = 140 + Math.random() * (GAME.width - 280);
+                const prefix = `proc_f${f}_${Date.now() % 10000}`;
+                const form = createObstacleFormation({
+                    baseX,
+                    cols: choice.cols,
+                    rows: choice.rows,
+                    obsWidth: OBSTACLE_SIZE,
+                    obsHeight: OBSTACLE_HEIGHT,
+                    idPrefix: prefix,
+                    mode: choice.mode,
+                    imgKey: null,
+                    hp: baseHp
+                });
+                for (let j = 0; j < form.length; j++) {
+                    const o = form[j];
+                    const key = obsList[Math.floor(Math.random() * obsList.length)];
+                    const img = IMAGES[key];
+                    const useImage = img && img.complete && img.naturalWidth > 0;
+                    o.imgKey = useImage ? key : null;
+                    o.type = useImage ? 'image' : (Math.random() > 0.5 ? 'bunker' : 'rockwall');
+                    o.hp = baseHp + (difficulty - 1) * 10;
+                    o.maxHp = o.hp;
+                    o.alive = true;
+                    GAME.obstacles.push(o);
+                }
             }
         }
     }
