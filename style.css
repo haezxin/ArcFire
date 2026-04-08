@@ -10,8 +10,7 @@
     --accent: #ffd54f;
     --danger: #ff6b6b;
     --success: #71e07a;
-    --font-hud: 'Rajdhani', sans-serif;
-    --font-title: 'Orbitron', sans-serif;
+    --font-primary: 'Rajdhani', sans-serif;
 }
 
 /* ── FLOATING UI ─────────────────────────────────────── */
@@ -61,7 +60,7 @@ html, body {
 }
 
 body {
-    font-family: var(--font-hud);
+    font-family: var(--font-primary);
     color: var(--text);
     background:
         radial-gradient(circle at top, rgba(255,255,255,0.1), transparent 35%),
@@ -69,6 +68,79 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* ── UNIFIED FORM ELEMENTS ───────────────────────────── */
+input, select, textarea, button {
+    font-family: var(--font-primary);
+    font-size: inherit;
+}
+
+/* ── FORM INPUT SIZING ────────────────────────────────── */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="url"],
+select,
+textarea {
+    height: auto;
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text);
+    font-size: 14px;
+    font-family: var(--font-primary);
+    transition: all 0.3s ease;
+    line-height: 1.4;
+}
+
+textarea {
+    min-height: 100px;
+    resize: vertical;
+    max-width: 100%;
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="number"]::placeholder,
+input[type="search"]::placeholder,
+input[type="url"]::placeholder,
+textarea::placeholder {
+    color: var(--muted);
+    opacity: 0.7;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
+input[type="url"]:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 0 12px rgba(255, 213, 79, 0.2);
+}
+
+select {
+    appearance: none;
+    padding-right: 36px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23eef7ff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    padding-right: 32px;
+}
+
+select::-ms-expand {
+    display: none;
 }
 
 .app {
@@ -114,7 +186,7 @@ body {
 }
 
 .round-chip {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 11px;
     color: var(--muted);
     background: rgba(255,255,255,0.05);
@@ -130,7 +202,7 @@ body {
 }
 
 .score-chip {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 16px;
     font-weight: 700;
     display: flex;
@@ -144,7 +216,7 @@ body {
 
 /* ── TURN BADGE ───────────────────────────────────────── */
 .turn-badge {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     background: rgba(255, 213, 79, 0.12);
     color: var(--accent);
     padding: 5px 14px;
@@ -166,7 +238,7 @@ body {
     border-radius: 20px;
     padding: 4px 14px;
     font-size: 13px;
-    font-family: var(--font-hud);
+    font-family: var(--font-primary);
     font-weight: 600;
 }
 
@@ -183,7 +255,7 @@ body {
 }
 
 .wind-value {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 12px;
     color: var(--accent);
     min-width: 28px;
@@ -311,7 +383,7 @@ body {
     border: 1px solid rgba(255,255,255,0.11);
     padding: 8px 16px;
     font-size: 13px;
-    font-family: var(--font-hud);
+    font-family: var(--font-primary);
     font-weight: 600;
     border-radius: 8px;
     cursor: pointer;
@@ -332,7 +404,7 @@ body {
     border-radius: 40px;
     cursor: pointer;
     border: none;
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-weight: 700;
     text-transform: uppercase;
     box-shadow: 0 6px 24px rgba(60,191,75,0.32);
@@ -348,6 +420,46 @@ body {
 
 .primary-btn:active {
     transform: translateY(1px);
+}
+
+/* ── BACK BUTTON ──────────────────────────────────────── */
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    color: #e8f3ff;
+    border: none;
+    padding: 0;
+    font-size: 14px;
+    font-family: var(--font-primary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    box-shadow: none;
+}
+
+.back-btn:hover {
+    color: var(--accent);
+    transform: translateX(-3px);
+}
+
+.back-btn:active {
+    transform: translateX(-1px);
+}
+
+.back-btn::after {
+    content: '←';
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -2px;
+    transition: transform 0.2s ease;
+}
+
+.back-btn:hover::after {
+    transform: translateX(-2px);
 }
 
 /* ── STAGE ────────────────────────────────────────────── */
@@ -413,7 +525,7 @@ canvas {
     background: transparent;
     border: none;
     color: var(--muted);
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 14px;
     font-weight: 700;
     padding: 10px 30px;
@@ -421,6 +533,8 @@ canvas {
     cursor: pointer;
     transition: all 0.3s ease;
     letter-spacing: 2px;
+    height: 50px;
+    width: 150px;
 }
 
 .menu-tab:hover {
@@ -479,7 +593,7 @@ canvas {
 }
 
 .intro-content h1 {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: clamp(48px, 8vw, 72px);
     margin: 0 0 16px;
     color: var(--accent);
@@ -542,8 +656,8 @@ canvas {
 }
 
 .intro-instructions h3 {
-    font-family: var(--font-title);
-    font-size: 14px;
+    font-family: var(--font-primary);
+    font-size: 20px;
     margin: 0 0 20px;
     color: var(--muted);
     text-align: center;
@@ -573,7 +687,7 @@ canvas {
     padding: 3px 10px;
     border-radius: 6px;
     font-size: 12px;
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     white-space: nowrap;
     border: 1px solid rgba(255,213,79,0.15);
 }
@@ -605,8 +719,8 @@ canvas {
 }
 
 .selector-group h3 {
-    font-family: var(--font-title);
-    font-size: 12px;
+    font-family: var(--font-primary);
+    font-size: 20px;
     letter-spacing: 2px;
     color: var(--muted);
     margin: 0 0 16px;
@@ -622,7 +736,7 @@ canvas {
     height: 35%;
 }
 .selector-group-mode h3 {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 12px;
     letter-spacing: 2px;
     color: var(--muted);
@@ -642,7 +756,7 @@ canvas {
     padding: 12px 24px;
     border-radius: 12px;
     font-size: 15px;
-    font-family: var(--font-hud);
+    font-family: var(--font-primary);
     cursor: pointer;
     outline: none;
     transition: all 0.2s;
@@ -665,7 +779,7 @@ canvas {
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.08);
     color: var(--muted);
-    font-family: var(--font-hud);
+    font-family: var(--font-primary);
     font-size: 14px;
     font-weight: 700;
     padding: 10px 20px;
@@ -705,7 +819,7 @@ canvas {
     padding: 12px 24px;
     border-radius: 12px;
     font-size: 15px;
-    font-family: var(--font-hud);
+    font-family: var(--font-primary);
     cursor: pointer;
     outline: none;
     transition: all 0.2s;
@@ -719,7 +833,7 @@ canvas {
 
 /* ABOUT SECTION */
 .about-content h2 {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 32px;
     color: var(--accent);
     letter-spacing: 8px;
@@ -749,7 +863,7 @@ canvas {
 }
 
 .about-card h3 {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 14px;
     color: var(--accent);
     margin-bottom: 12px;
@@ -801,7 +915,7 @@ canvas {
 .stat-row:last-child { border-bottom: none; }
 
 .stat-row span:first-child { color: var(--muted); }
-.stat-row span:last-child  { color: var(--text); font-weight: 700; font-family: var(--font-title); font-size: 13px; }
+.stat-row span:last-child  { color: var(--text); font-weight: 700; font-family: var(--font-primary); font-size: 13px; }
 
 /* ── GAME OVER SCREEN BUTTONS ────────────────────────── */
 #gameOverScreen .primary-btn {
@@ -838,12 +952,12 @@ canvas {
     border-radius: 4px;
     padding: 1px 7px;
     font-size: 12px;
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
 }
 
 /* ── TUTORIAL SECTION ────────────────────────────────── */
 .tutorial-content h2 {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 32px;
     color: var(--accent);
     letter-spacing: 8px;
@@ -877,7 +991,7 @@ canvas {
 }
 
 .step-num {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 24px;
     color: var(--accent);
     opacity: 0.5;
@@ -885,7 +999,7 @@ canvas {
 }
 
 .step-info h3 {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 14px;
     margin: 0 0 8px;
     color: var(--text);
@@ -906,7 +1020,7 @@ canvas {
     border-radius: 4px;
     padding: 1px 6px;
     font-size: 11px;
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     color: #fff;
     margin: 0 2px;
 }
@@ -969,7 +1083,7 @@ canvas {
     background: rgba(255, 213, 79, 0.15);
     border: 1px solid rgba(255, 213, 79, 0.4);
     color: var(--accent);
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 11px;
     letter-spacing: 3px;
     padding: 5px 18px;
@@ -979,7 +1093,7 @@ canvas {
 }
 
 .tut-title {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: clamp(28px, 5vw, 46px);
     line-height: 1.1;
     margin: 0 0 24px;
@@ -1031,7 +1145,7 @@ canvas {
 }
 
 .tut-step h3 {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 13px;
     color: var(--accent);
     margin: 0 0 6px;
@@ -1075,7 +1189,7 @@ canvas {
 }
 
 .sfx-widget-label {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 11px;
     letter-spacing: 2px;
     color: var(--muted);
@@ -1202,7 +1316,7 @@ canvas {
 /* Pct label */
 .sfx-pct {
     flex-shrink: 0;
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 15px;
     font-weight: 700;
     color: var(--accent);
@@ -1244,7 +1358,7 @@ canvas {
     border: 1px solid rgba(255, 213, 79, 0.3);
     padding: 10px 22px;
     border-radius: 12px;
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
 }
 
 .cr-label { color: var(--muted); font-size: 11px; margin-right: 8px; }
@@ -1261,7 +1375,7 @@ canvas {
 }
 
 .shop-column h3 {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 13px;
     letter-spacing: 2px;
     color: var(--muted);
@@ -1283,7 +1397,7 @@ canvas {
 }
 
 .up-name, .ammo-buy-name {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 13px;
     color: var(--text);
     margin-bottom: 4px;
@@ -1408,7 +1522,7 @@ canvas {
 }
 
 .part-label {
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 11px;
     letter-spacing: 1px;
     color: var(--muted);
@@ -1423,7 +1537,7 @@ canvas {
 .val-label {
     min-width: 100px;
     text-align: center;
-    font-family: var(--font-title);
+    font-family: var(--font-primary);
     font-size: 13px;
     color: var(--accent);
     letter-spacing: 1px;

@@ -75,9 +75,8 @@
                     <div class="tut-actions">
                         <button id="StartBtn" class="primary-btn" onclick="hideTutorialOverlay()">Got It — Let's
                             Fight!</button>
-                        <button id="tutMenuBtn" class="secondary-btn"
-                            onclick="hideTutorialOverlay(); if(GAME.paused) togglePause(); quitToMenu();">Back to
-                            Menu</button>
+                        <button id="tutMenuBtn" class="back-btn"
+                            onclick="hideTutorialOverlay(); if(GAME.paused) togglePause(); quitToMenu();">Back to Menu</button>
                     </div>
                     <p class="tut-hint">You can replay this tutorial any time from the <strong>TUTORIAL</strong> tab in
                         the main menu.</p>
@@ -375,8 +374,7 @@
                             </div>
                         </div>
                         <div style="display: flex; gap: 12px; justify-content: center; margin-top:20px;">
-                            <button class="secondary-btn"
-                                onclick="document.querySelector('[data-tab=\'play\']').click()">Back</button>
+                            
                             <button class="primary-btn" onclick="startGame()">Start Battle Now</button>
                         </div>
                     </div>
