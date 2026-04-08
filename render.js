@@ -225,7 +225,9 @@ function drawAimGuide() {
     let vx = Math.cos(rad) * activeTank.power * 0.165;
     let vy = Math.sin(rad) * activeTank.power * 0.165;
 
-    const steps = 35 + (activeTank === player ? (GAME.playerUpgrades.pointer * 12) : 0);
+    const baseAimSteps = 16;
+    const extraStepsPerUpgrade = 12;
+    const steps = baseAimSteps + (activeTank === player ? (GAME.playerUpgrades.pointer * extraStepsPerUpgrade) : 0);
     for (let i = 0; i < steps; i++) {
         // Step 2 frames per iteration to preview trajectory far out efficiently
         x += vx; y += vy; vy += GAME.gravity; vx += GAME.wind * 1.15;
@@ -234,11 +236,12 @@ function drawAimGuide() {
         if (y > getTerrainY(x)) break;
     }
 
+    const highlightThreshold = Math.floor(steps * 0.7);
     ctx.save();
     for (let i = 0; i < preview.length; i++) {
         const p = preview[i];
         ctx.globalAlpha = 1 - i / preview.length;
-        ctx.fillStyle = (activeTank === player && i > 35) ? "#ffd54f" : "#ffffff";
+        ctx.fillStyle = (activeTank === player && i > highlightThreshold) ? "#ffd54f" : "#ffffff";
         ctx.beginPath();
         ctx.arc(p.x, p.y, 2.4 - i * (2.4 / preview.length), 0, Math.PI * 2);
         ctx.fill();
