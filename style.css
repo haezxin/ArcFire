@@ -803,6 +803,28 @@ canvas {
 .stat-row span:first-child { color: var(--muted); }
 .stat-row span:last-child  { color: var(--text); font-weight: 700; font-family: var(--font-title); font-size: 13px; }
 
+/* ── GAME OVER SCREEN BUTTONS ────────────────────────── */
+#gameOverScreen .primary-btn {
+    font-size: 16px;
+    padding: 12px 32px;
+    min-width: 200px;
+}
+
+#gameOverScreen .secondary-btn {
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    min-width: 200px;
+    transition: all 0.2s ease;
+}
+
+#gameOverScreen .secondary-btn:hover {
+    background: #2d4456;
+    border-color: rgba(255,213,79,0.3);
+    color: var(--accent);
+}
+
 /* ── PAUSE SCREEN ─────────────────────────────────────── */
 .pause-hint {
     margin-top: 16px;
