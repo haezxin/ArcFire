@@ -863,9 +863,18 @@ if (modeSelectBox) {
         if (modeSelectBox.value === "1") {
             diffBtns.style.pointerEvents = "none";
             diffBtns.style.opacity = "0.5";
+            // Multiplayer: enable Player 2 customization button
+            const p2btn = document.getElementById('customP2Btn');
+            if (p2btn) { p2btn.style.display = ''; p2btn.disabled = false; }
         } else {
             diffBtns.style.pointerEvents = "auto";
             diffBtns.style.opacity = "1";
+            // Single/Endless: hide/disable Player 2 customize button and enforce player target
+            const p2btn = document.getElementById('customP2Btn');
+            if (p2btn) { p2btn.style.display = 'none'; p2btn.disabled = true; }
+            GAME.customTarget = 'player';
+            const p1btn = document.getElementById('customP1Btn');
+            if (p1btn) { p1btn.classList.add('primary-btn'); }
         }
     }
     modeSelectBox.addEventListener("change", updateDiffSelectorState);
@@ -923,6 +932,42 @@ function openShop() {
     document.getElementById("shopScreen").classList.remove("hidden");
     updateShopUI();
 }
+
+    function setCustomTarget(target) {
+        // target: 'player' or 'enemy'
+        GAME.customTarget = (target === 'enemy') ? 'enemy' : 'player';
+        // Update UI button states
+        const b1 = document.getElementById('customP1Btn');
+        const b2 = document.getElementById('customP2Btn');
+        if (b1 && b2) {
+            if (GAME.customTarget === 'player') { b1.classList.add('primary-btn'); b2.classList.remove('primary-btn'); }
+            else { b2.classList.add('primary-btn'); b1.classList.remove('primary-btn'); }
+        }
+        // Refresh preview & names to reflect target's currently selected parts
+        // If customizing enemy, seed GAME.customParts.indices from enemy.customParts where possible
+        if (GAME.customTarget === 'enemy') {
+            // try to find indices matching enemy's current parts
+            ['turret','body','tracks'].forEach(t => {
+                const cat = t === 'turret' ? 'turrets' : (t === 'body' ? 'bodies' : 'tracks');
+                const list = GAME.customParts[cat];
+                const key = enemy.customParts && enemy.customParts[t];
+                if (!key) return;
+                const idx = list.findIndex(it => it.key === key);
+                if (idx >= 0) GAME.customParts.indices[t] = idx;
+            });
+        } else {
+            // seed from player
+            ['turret','body','tracks'].forEach(t => {
+                const cat = t === 'turret' ? 'turrets' : (t === 'body' ? 'bodies' : 'tracks');
+                const list = GAME.customParts[cat];
+                const key = player.customParts && player.customParts[t];
+                if (!key) return;
+                const idx = list.findIndex(it => it.key === key);
+                if (idx >= 0) GAME.customParts.indices[t] = idx;
+            });
+        }
+        cyclePart(null, 0);
+    }
 
 function closeShop() {
     document.getElementById("shopScreen").classList.add("hidden");
@@ -1029,6 +1074,10 @@ function buyAmmo(idx, isRefill) {
 // ── CUSTOMIZATION LOGIC ──────────────────────────────────────────────────
 
 function cyclePart(type, dir) {
+    // Which tank are we customizing? Default to player.
+    const targetKey = GAME.customTarget || 'player';
+    const targetTank = targetKey === 'player' ? player : enemy;
+
     if (type) {
         // Find how many items are in this category 
         const categoryMap = { turret: "turrets", body: "bodies", tracks: "tracks" };
@@ -1051,19 +1100,23 @@ function cyclePart(type, dir) {
         });
     }
 
-    // Apply parts to player
-    player.customParts = {
+    // Apply parts to selected customization target (player or enemy)
+    targetTank.customParts = {
         turret: GAME.customParts.turrets[GAME.customParts.indices.turret].key,
         body: GAME.customParts.bodies[GAME.customParts.indices.body].key,
         tracks: GAME.customParts.tracks[GAME.customParts.indices.tracks].key
     };
-    player.isCustom = true;
+    targetTank.isCustom = true;
 
-    updateCustomPreview();
+    updateCustomPreview(targetKey);
     if (typeof SFX !== "undefined" && dir !== 0) SFX.play("tankLanding", 0.4);
 }
 
-function updateCustomPreview() {
+function updateCustomPreview(targetKey = null) {
+    // targetKey: 'player' or 'enemy'. If omitted use GAME.customTarget or default player.
+    const tk = targetKey || GAME.customTarget || 'player';
+    const targetTank = tk === 'player' ? player : enemy;
+
     const canvas = document.getElementById("customPreview");
     if (!canvas) return;
     const pctx = canvas.getContext("2d");
@@ -1073,7 +1126,7 @@ function updateCustomPreview() {
 
     pctx.clearRect(0, 0, W, H);
 
-    const parts = player.customParts;
+    const parts = targetTank.customParts;
     const tracksImg = IMAGES[parts.tracks];
     const turretImg = IMAGES[parts.turret];
     const bodyImg = IMAGES[parts.body];
