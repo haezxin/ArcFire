@@ -80,7 +80,7 @@ function resetGame() {
     const WAR_OBSTACLES = { 1: wheels, 2: wheels, 3: wheels, 4: wheels };
 
     const lv = Math.min(GAME.level, 4);
-    const obsList = [...WAR_OBSTACLES[lv] || [], ...barrels, ...crates];
+    const obsList = [...barrels, "obs_crate_wood"];
 
     GAME.obstacles = [];
     let numObstacles = Math.floor(Math.random() * 3) + 1 + Math.floor(GAME.difficulty / 2);
